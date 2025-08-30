@@ -212,10 +212,6 @@ Las contribuciones son bienvenidas. Por favor:
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Abre un Pull Request
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
 ## 👨‍💻 Autor
 
 Desarrollado como ejemplo educativo de una aplicación Angular 20 moderna con Firebase y ChatGPT.
@@ -223,3 +219,4 @@ Desarrollado como ejemplo educativo de una aplicación Angular 20 moderna con Fi
 ---
 
 **¡Esperamos que disfrutes construyendo con esta aplicación! 🚀**
+
