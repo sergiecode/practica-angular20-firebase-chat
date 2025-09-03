@@ -105,8 +105,8 @@ export class OpenaiService {
     const cuerposPeticion: PeticionOpenAI = {
       model: 'gpt-3.5-turbo',  // Usamos GPT-3.5 por ser más económico y rápido
       messages: mensajes,
-      max_tokens: 150,         // Reducido a 150 tokens para ahorrar costos
-      temperature: 0.5         // Reducido para respuestas más consistentes
+      max_tokens: 200,         // Aumentado para permitir respuestas más completas
+      temperature: 0.7         // Restaurado para respuestas más naturales
     };
 
     // Hacemos la petición HTTP a la API de OpenAI
@@ -116,7 +116,13 @@ export class OpenaiService {
         map(respuesta => {
           // Verificamos que la respuesta tenga el formato esperado
           if (respuesta.choices && respuesta.choices.length > 0) {
-            const contenidoRespuesta = respuesta.choices[0].message.content;
+            const choice = respuesta.choices[0];
+            let contenidoRespuesta = choice.message.content;
+            
+            // Verificamos si la respuesta fue truncada por límite de tokens
+            if (choice.finish_reason === 'length') {
+              contenidoRespuesta += '\n\n[Nota: Respuesta truncada por límite de tokens. Puedes pedirme que continúe.]';
+            }
             
             return contenidoRespuesta;
           } else {
@@ -148,15 +154,34 @@ export class OpenaiService {
 
   /**
    * Convierte nuestro historial de mensajes al formato que espera OpenAI
+   * También optimiza el historial para mantener dentro de límites de tokens
    * 
    * @param mensajes - Nuestros mensajes internos
    * @returns Array de mensajes en formato OpenAI
    */
   convertirHistorialAOpenAI(mensajes: any[]): MensajeOpenAI[] {
-    return mensajes.map(msg => ({
-      role: msg.tipo === 'usuario' ? 'user' : 'assistant',
+    // Convertimos los mensajes al formato de OpenAI
+    const historialConvertido = mensajes.map(msg => ({
+      role: (msg.tipo === 'usuario' ? 'user' : 'assistant') as 'user' | 'assistant',
       content: msg.contenido
     }));
+    
+    // Si tenemos demasiados mensajes, priorizamos los más recientes
+    // pero siempre mantenemos pares de pregunta-respuesta completos
+    if (historialConvertido.length > 8) {
+      // Tomamos los últimos 6 mensajes, pero asegurándonos de mantener pares
+      const ultimosMensajes = historialConvertido.slice(-6);
+      
+      // Si empezamos con una respuesta del asistente, quitamos el primer mensaje
+      // para mantener el contexto conversacional correcto
+      if (ultimosMensajes.length > 0 && ultimosMensajes[0].role === 'assistant') {
+        return ultimosMensajes.slice(1);
+      }
+      
+      return ultimosMensajes;
+    }
+    
+    return historialConvertido;
   }
 
   /**

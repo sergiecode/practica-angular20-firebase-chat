@@ -123,9 +123,10 @@ export class ChatService {
       const mensajesActuales = this.mensajesSubject.value;
       
       // Convertimos nuestro historial al formato que espera OpenAI
-      // Solo tomamos los últimos 10 mensajes para no exceder límites de tokens
+      // Solo tomamos los últimos 6 mensajes para no exceder límites de tokens
+      // Esto deja más espacio para respuestas más completas
       const historialParaOpenAI = this.openaiService.convertirHistorialAOpenAI(
-        mensajesActuales.slice(-10)
+        mensajesActuales.slice(-6)
       );
       
       // Enviamos el mensaje a ChatGPT y esperamos la respuesta
