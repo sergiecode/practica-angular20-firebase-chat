@@ -45,38 +45,19 @@ export class ChatService {
    * @param usuarioId - ID del usuario para cargar su historial
    */
   async inicializarChat(usuarioId: string): Promise<void> {
-    console.log('🚀 === INICIALIZANDO CHAT ===');
-    console.log('🚀 Usuario ID:', usuarioId);
-    console.log('🚀 Estado actual mensajes:', this.mensajesSubject.value.length);
-    
     if (this.cargandoHistorial) {
-      console.log('⏳ Ya se está cargando el historial, esperando...');
       return;
     }
     
     this.cargandoHistorial = true;
     
     try {
-      console.log('📡 Configurando listener de Firestore...');
-      
       // Nos suscribimos a los mensajes del usuario en tiempo real
       this.firestoreService.obtenerMensajesUsuario(usuarioId).subscribe({
         next: (mensajes) => {
-          console.log(`📨 === HISTORIAL CARGADO DESDE FIRESTORE ===`);
-          console.log(`📨 Cantidad de mensajes en Firestore: ${mensajes.length}`);
-          console.log(`📨 Mensajes del historial:`, mensajes.map(m => ({ 
-            tipo: m.tipo, 
-            contenido: m.contenido.substring(0, 50),
-            fecha: m.fechaEnvio,
-            id: m.id
-          })));
-          
           // Actualizamos el BehaviorSubject con los mensajes obtenidos
           this.mensajesSubject.next(mensajes);
-          console.log(`📨 BehaviorSubject actualizado con ${this.mensajesSubject.value.length} mensajes`);
-          
           this.cargandoHistorial = false;
-          console.log(`📨 === FIN CARGA HISTORIAL ===`);
         },
         error: (error) => {
           console.error('❌ Error al cargar historial:', error);
@@ -86,8 +67,6 @@ export class ChatService {
           this.mensajesSubject.next([]);
         }
       });
-      
-      console.log('✅ Listener de Firestore configurado');
       
     } catch (error) {
       console.error('❌ Error al inicializar chat:', error);
@@ -102,10 +81,6 @@ export class ChatService {
    * @param contenidoMensaje - El texto del mensaje que envía el usuario
    */
   async enviarMensaje(contenidoMensaje: string): Promise<void> {
-    console.log('🚀 === INICIO ENVIAR MENSAJE ===');
-    console.log('📝 Contenido a enviar:', contenidoMensaje);
-    console.log('📊 Estado actual mensajes:', this.mensajesSubject.value.length);
-    
     // Obtenemos el usuario actual
     const usuarioActual = this.authService.obtenerUsuarioActual();
     
@@ -115,12 +90,8 @@ export class ChatService {
     }
     
     if (!contenidoMensaje.trim()) {
-      console.warn('⚠️ Mensaje vacío, no se enviará');
       return;
     }
-    
-    console.log('📤 Enviando mensaje del usuario:', contenidoMensaje);
-    console.log('👤 Usuario actual:', usuarioActual);
     
     // Creamos el mensaje del usuario
     const mensajeUsuario: MensajeChat = {
@@ -132,26 +103,16 @@ export class ChatService {
     };
     
     try {
-      console.log('💾 Intentando guardar mensaje del usuario...');
-      console.log('📋 Mensaje usuario creado:', mensajeUsuario);
-      
       // PRIMERO mostramos el mensaje del usuario en la UI inmediatamente
       const mensajesDelUsuario = this.mensajesSubject.value;
-      console.log('📊 Mensajes antes de agregar usuario:', mensajesDelUsuario.length);
       
       const nuevosMatches = [...mensajesDelUsuario, mensajeUsuario];
       this.mensajesSubject.next(nuevosMatches);
       
-      console.log('📊 Mensajes después de agregar usuario:', this.mensajesSubject.value.length);
-      console.log('✅ Mensaje del usuario mostrado en la UI');
-      console.log('🔍 Estado actual del BehaviorSubject:', this.mensajesSubject.value.map(m => ({ tipo: m.tipo, contenido: m.contenido.substring(0, 50) })));
-      
       // DESPUÉS intentamos guardarlo en Firestore (en background)
       try {
         await this.firestoreService.guardarMensaje(mensajeUsuario);
-        console.log('✅ Mensaje del usuario guardado exitosamente en Firestore');
       } catch (firestoreError) {
-        console.warn('⚠️ Error al guardar mensaje del usuario en Firestore:', firestoreError);
         // El mensaje ya está visible, así que continuamos
       }
       
@@ -167,14 +128,10 @@ export class ChatService {
         mensajesActuales.slice(-10)
       );
       
-      console.log('🤖 Solicitando respuesta a ChatGPT...');
-      
       // Enviamos el mensaje a ChatGPT y esperamos la respuesta
       const respuestaAsistente = await firstValueFrom(
         this.openaiService.enviarMensaje(contenidoMensaje, historialParaOpenAI)
       );
-      
-      console.log('✅ Respuesta recibida de ChatGPT');
       
       // Creamos el mensaje con la respuesta del asistente
       const mensajeAsistente: MensajeChat = {
@@ -187,22 +144,14 @@ export class ChatService {
       
       // PRIMERO mostramos la respuesta en la UI inmediatamente
       const mensajesActualizados = this.mensajesSubject.value;
-      console.log('📊 Mensajes antes de agregar asistente:', mensajesActualizados.length);
       
       const nuevosMatches2 = [...mensajesActualizados, mensajeAsistente];
       this.mensajesSubject.next(nuevosMatches2);
       
-      console.log('📊 Mensajes después de agregar asistente:', this.mensajesSubject.value.length);
-      console.log('✅ Respuesta del asistente mostrada en la UI');
-      console.log('🔍 Estado final del BehaviorSubject:', this.mensajesSubject.value.map(m => ({ tipo: m.tipo, contenido: m.contenido.substring(0, 50) })));
-      
       // DESPUÉS intentamos guardar en Firestore (en background)
       try {
-        console.log('💾 Intentando guardar mensaje del asistente en Firestore...');
         await this.firestoreService.guardarMensaje(mensajeAsistente);
-        console.log('💾 Respuesta del asistente guardada exitosamente en Firestore');
       } catch (firestoreError) {
-        console.warn('⚠️ Error al guardar en Firestore, pero el mensaje ya se muestra:', firestoreError);
         // El mensaje ya está visible, así que no es crítico
       }
       
@@ -250,7 +199,6 @@ export class ChatService {
    * Solo limpia la vista local, no elimina de Firestore
    */
   limpiarChat(): void {
-    console.log('🧹 Limpiando chat local');
     this.mensajesSubject.next([]);
   }
 

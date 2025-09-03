@@ -133,15 +133,11 @@ export class AuthComponent {
     // Activamos el estado de carga
     this.autenticando = true;
     
-    console.log('🔐 Usuario iniciando proceso de autenticación...');
-    
     try {
       // Llamamos al servicio de autenticación para iniciar sesión con Google
       const usuario = await this.authService.iniciarSesionConGoogle();
       
       if (usuario) {
-        console.log('✅ Autenticación exitosa, redirigiendo al chat...');
-        
         // Si la autenticación fue exitosa, navegamos a la página del chat
         await this.router.navigate(['/chat']);
         
@@ -178,12 +174,9 @@ export class AuthComponent {
    * Aquí podríamos verificar si el usuario ya está autenticado
    */
   ngOnInit(): void {
-    console.log('🎯 Componente de autenticación inicializado');
-    
     // Verificamos si el usuario ya está autenticado
     this.authService.estaAutenticado$.subscribe(autenticado => {
       if (autenticado) {
-        console.log('👤 Usuario ya autenticado, redirigiendo al chat...');
         this.router.navigate(['/chat']);
       }
     });

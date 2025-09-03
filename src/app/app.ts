@@ -32,7 +32,6 @@ export class App {
    * Se ejecuta cuando se crea una instancia del componente
    */
   constructor() {
-    console.log('🚀 Aplicación Angular inicializada');
-    console.log('📱 Chat Asistente v1.0 - Sergie Code');
+    // Aplicación Angular inicializada
   }
 }

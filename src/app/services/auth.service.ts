@@ -53,8 +53,6 @@ export class AuthService {
       proveedor.addScope('email');
       proveedor.addScope('profile');
       
-      console.log('🔐 Iniciando proceso de autenticación con Google...');
-      
       // Abrimos el popup de Google para autenticación
       const resultado = await signInWithPopup(this.auth, proveedor);
       
@@ -72,7 +70,6 @@ export class AuthService {
           ultimaConexion: new Date()
         };
         
-        console.log('✅ Usuario autenticado exitosamente:', usuario);
         return usuario;
       }
       
@@ -93,12 +90,8 @@ export class AuthService {
    */
   async cerrarSesion(): Promise<void> {
     try {
-      console.log('🚪 Cerrando sesión del usuario...');
-      
       // Usamos el método signOut de Firebase para cerrar la sesión
       await signOut(this.auth);
-      
-      console.log('✅ Sesión cerrada exitosamente');
       
     } catch (error) {
       console.error('❌ Error al cerrar sesión:', error);

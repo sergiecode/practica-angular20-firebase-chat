@@ -41,9 +41,6 @@ export class FirestoreService {
    */
   async guardarMensaje(mensaje: MensajeChat): Promise<void> {
     try {
-      console.log('💾 Guardando mensaje en Firestore...', mensaje);
-      console.log('🔍 Firebase config check:', environment.firebaseConfig.projectId);
-      
       // Validamos que tenemos todos los datos requeridos
       if (!mensaje.usuarioId) {
         throw new Error('usuarioId es requerido');
@@ -68,12 +65,8 @@ export class FirestoreService {
         fechaEnvio: Timestamp.fromDate(mensaje.fechaEnvio)
       };
       
-      console.log('📤 Datos validados para guardar:', mensajeParaGuardar);
-      
       // Añadimos el documento a la colección
       const docRef = await addDoc(coleccionMensajes, mensajeParaGuardar);
-      
-      console.log('✅ Mensaje guardado exitosamente en Firestore con ID:', docRef.id);
       
     } catch (error: any) {
       console.error('❌ Error al guardar mensaje en Firestore:', error);
@@ -94,8 +87,6 @@ export class FirestoreService {
    * @returns Observable que emite la lista de mensajes cada vez que hay cambios
    */
   obtenerMensajesUsuario(usuarioId: string): Observable<MensajeChat[]> {
-    console.log('📖 Configurando listener para mensajes del usuario:', usuarioId);
-    
     return new Observable(observer => {
       // Creamos una consulta para obtener solo los mensajes del usuario especificado
       // NOTA: Removemos temporalmente orderBy para evitar el problema del índice
@@ -111,22 +102,9 @@ export class FirestoreService {
       const unsubscribe = onSnapshot(
         consulta,
         (snapshot: QuerySnapshot<DocumentData>) => {
-          console.log('🔄 === FIRESTORE SNAPSHOT RECIBIDO ===');
-          console.log('🔄 Cantidad de documentos:', snapshot.docs.length);
-          console.log('🔄 Es del cache:', snapshot.metadata.fromCache);
-          console.log('🔄 Tiene cambios pendientes:', snapshot.metadata.hasPendingWrites);
-          
           // Transformamos los documentos de Firestore en nuestros objetos MensajeChat
           const mensajes: MensajeChat[] = snapshot.docs.map(doc => {
             const data = doc.data();
-            
-            console.log('📄 Documento procesado:', {
-              id: doc.id,
-              usuarioId: data['usuarioId'],
-              tipo: data['tipo'],
-              contenido: data['contenido'].substring(0, 50),
-              fechaEnvio: data['fechaEnvio']?.toDate()
-            });
             
             return {
               id: doc.id,
@@ -142,9 +120,6 @@ export class FirestoreService {
           // ORDENAMOS en el cliente ya que removimos orderBy de la query
           mensajes.sort((a, b) => a.fechaEnvio.getTime() - b.fechaEnvio.getTime());
           
-          console.log(`📨 Total mensajes procesados y ordenados: ${mensajes.length}`);
-          console.log('📨 === FIN SNAPSHOT FIRESTORE ===');
-          
           // Emitimos los mensajes a través del Observable
           observer.next(mensajes);
         },
@@ -156,7 +131,6 @@ export class FirestoreService {
 
       // Función de limpieza que se ejecuta cuando se cancela la suscripción
       return () => {
-        console.log('🛑 Cancelando listener de mensajes');
         unsubscribe();
       };
     });
@@ -171,8 +145,6 @@ export class FirestoreService {
    */
   async guardarConversacion(conversacion: ConversacionChat): Promise<void> {
     try {
-      console.log('💾 Guardando conversación completa...', conversacion);
-      
       const coleccionConversaciones = collection(this.firestore, 'conversaciones');
       
       // Preparamos la conversación, convirtiendo las fechas a Timestamps
@@ -188,8 +160,6 @@ export class FirestoreService {
       };
       
       await addDoc(coleccionConversaciones, conversacionParaGuardar);
-      
-      console.log('✅ Conversación guardada exitosamente');
       
     } catch (error) {
       console.error('❌ Error al guardar conversación:', error);
@@ -207,7 +177,6 @@ export class FirestoreService {
     // NOTA: Esta funcionalidad requiere implementación adicional
     // debido a que Firestore no permite eliminar múltiples documentos
     // en una sola operación desde el cliente
-    console.log('🗑️ Eliminación de mensajes - Funcionalidad por implementar');
     
     // En una aplicación real, esto se haría mediante Cloud Functions
     // o mediante un proceso batch en el backend

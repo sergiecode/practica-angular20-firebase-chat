@@ -197,8 +197,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    * Método del ciclo de vida que se ejecuta al inicializar el componente
    */
   async ngOnInit(): Promise<void> {
-    console.log('💬 Inicializando componente de chat...');
-    
     try {
       // Verificamos que el usuario esté autenticado
       await this.verificarAutenticacion();
@@ -219,8 +217,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    * Método del ciclo de vida que se ejecuta al destruir el componente
    */
   ngOnDestroy(): void {
-    console.log('🧹 Limpiando componente de chat...');
-    
     // Cancelamos todas las suscripciones para evitar memory leaks
     this.suscripciones.forEach(sub => sub.unsubscribe());
   }
@@ -243,12 +239,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.usuario = this.authService.obtenerUsuarioActual();
     
     if (!this.usuario) {
-      console.warn('⚠️ Usuario no autenticado, redirigiendo al login...');
       await this.router.navigate(['/auth']);
       throw new Error('Usuario no autenticado');
     }
-    
-    console.log('👤 Usuario autenticado:', this.usuario.displayName);
   }
 
   /**
@@ -257,15 +250,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private async inicializarChat(): Promise<void> {
     if (!this.usuario) return;
     
-    console.log('🎬 === INICIALIZANDO CHAT EN COMPONENTE ===');
-    console.log('🎬 Usuario para inicializar:', this.usuario.uid);
-    
     this.cargandoHistorial = true;
     
     try {
       // Inicializamos el chat con el ID del usuario
       await this.chatService.inicializarChat(this.usuario.uid);
-      console.log('✅ Chat inicializado correctamente en componente');
       
     } catch (error) {
       console.error('❌ Error al inicializar chat en componente:', error);
@@ -280,29 +269,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    * Configura las suscripciones a los observables del servicio
    */
   private configurarSuscripciones(): void {
-    console.log('🔗 Configurando suscripciones del componente...');
-    
     // Suscribirse a los mensajes del chat
     const subMensajes = this.chatService.mensajes$.subscribe(mensajes => {
-      console.log(`📨 === COMPONENTE RECIBIÓ MENSAJES ===`);
-      console.log(`📨 Cantidad: ${mensajes.length} mensajes`);
-      console.log(`📨 Mensajes recibidos:`, mensajes.map(m => ({ 
-        tipo: m.tipo, 
-        contenido: m.contenido.substring(0, 50),
-        id: m.id || 'sin-id'
-      })));
-      
       this.mensajes = mensajes;
-      console.log(`📨 this.mensajes actualizado a ${this.mensajes.length} elementos`);
-      
       this.debeHacerScroll = true;
-      
-      console.log(`📨 === FIN RECEPCIÓN MENSAJES ===`);
     });
     
     // Suscribirse al estado del asistente
     const subAsistente = this.chatService.asistenteRespondiendo$.subscribe(respondiendo => {
-      console.log(`🤖 Estado asistente cambiado: ${respondiendo ? 'escribiendo' : 'esperando'}`);
       this.asistenteEscribiendo = respondiendo;
       if (respondiendo) {
         this.debeHacerScroll = true;
@@ -310,7 +284,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
     
     this.suscripciones.push(subMensajes, subAsistente);
-    console.log('✅ Suscripciones configuradas correctamente');
   }
 
   /**
@@ -319,7 +292,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   async enviarMensaje(): Promise<void> {
     // Validamos que hay texto para enviar
     if (!this.mensajeTexto.trim()) {
-      console.warn('⚠️ Intento de enviar mensaje vacío');
       return;
     }
     
@@ -330,8 +302,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Guardamos el texto del mensaje y limpiamos el input
     const texto = this.mensajeTexto.trim();
     this.mensajeTexto = '';
-    
-    console.log('📤 Enviando mensaje:', texto);
     
     try {
       // Enviamos el mensaje usando el servicio de chat
@@ -370,8 +340,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    */
   async cerrarSesion(): Promise<void> {
     try {
-      console.log('🚪 Cerrando sesión...');
-      
       // Limpiamos el chat local
       this.chatService.limpiarChat();
       
@@ -397,7 +365,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         container.scrollTop = container.scrollHeight;
       }
     } catch (error) {
-      console.warn('⚠️ Error al hacer scroll:', error);
+      // Error al hacer scroll - no crítico
     }
   }
 

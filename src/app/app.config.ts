@@ -41,21 +41,18 @@ export const appConfig: ApplicationConfig = {
     // Configuración de Firebase
     // Inicializa la aplicación Firebase con nuestra configuración
     provideFirebaseApp(() => {
-      console.log('🔥 Inicializando Firebase...');
       return initializeApp(environment.firebaseConfig);
     }),
     
     // Configuración de Firebase Authentication
     // Permite el login con Google y manejo de usuarios
     provideAuth(() => {
-      console.log('🔐 Configurando Firebase Authentication...');
       return getAuth();
     }),
     
     // Configuración de Firestore (base de datos)
     // Permite guardar y recuperar mensajes del chat
     provideFirestore(() => {
-      console.log('📚 Configurando Firestore...');
       return getFirestore();
     })
   ]

@@ -71,8 +71,6 @@ export class OpenaiService {
    * @returns Observable con la respuesta de ChatGPT
    */
   enviarMensaje(mensaje: string, historialPrevio: MensajeOpenAI[] = []): Observable<string> {
-    console.log('🤖 Enviando mensaje a ChatGPT:', mensaje);
-    
     // Verificamos que tenemos la clave de API configurada
     if (!this.apiKey || this.apiKey === 'TU_API_KEY_DE_OPENAI') {
       console.error('❌ API Key de OpenAI no configurada');
@@ -111,25 +109,14 @@ export class OpenaiService {
       temperature: 0.5         // Reducido para respuestas más consistentes
     };
 
-    console.log('📤 Enviando petición a OpenAI...', {
-      model: cuerposPeticion.model,
-      mensajesCount: mensajes.length,
-      ultimoMensaje: mensaje.substring(0, 100) + '...'
-    });
-
     // Hacemos la petición HTTP a la API de OpenAI
     return this.http.post<RespuestaOpenAI>(this.apiUrl, cuerposPeticion, { headers })
       .pipe(
         // Transformamos la respuesta para extraer solo el contenido del mensaje
         map(respuesta => {
-          console.log('📥 Respuesta recibida de OpenAI');
-          
           // Verificamos que la respuesta tenga el formato esperado
           if (respuesta.choices && respuesta.choices.length > 0) {
             const contenidoRespuesta = respuesta.choices[0].message.content;
-            
-            console.log('✅ Respuesta de ChatGPT:', contenidoRespuesta.substring(0, 100) + '...');
-            console.log('📊 Tokens utilizados:', respuesta.usage?.total_tokens || 'No disponible');
             
             return contenidoRespuesta;
           } else {
@@ -179,10 +166,6 @@ export class OpenaiService {
    */
   verificarConfiguracion(): boolean {
     const configuracionValida = !!(this.apiKey && this.apiKey !== 'TU_API_KEY_DE_OPENAI' && this.apiUrl);
-    
-    if (!configuracionValida) {
-      console.warn('⚠️ Configuración de OpenAI incompleta. Revisa environment.ts');
-    }
     
     return configuracionValida;
   }
