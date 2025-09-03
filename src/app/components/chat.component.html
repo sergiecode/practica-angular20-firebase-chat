@@ -1,0 +1,134 @@
+<!-- Contenedor principal del chat -->
+<div class="chat-container">
+  
+  <!-- Header con información del usuario -->
+  <header class="chat-header">
+    <div class="user-info">
+      <img 
+        [src]="usuario?.photoURL || '/assets/default-avatar.png'" 
+        [alt]="usuario?.displayName || 'Usuario'"
+        class="user-avatar"
+        (error)="manejarErrorImagen($event)">
+      <div class="user-details">
+        <h3 class="user-name">{{ usuario?.displayName || 'Usuario' }}</h3>
+        <p class="user-email">{{ usuario?.email }}</p>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Botón de cerrar sesión -->
+      <button 
+        class="logout-btn" 
+        (click)="cerrarSesion()"
+        title="Cerrar sesión">
+        🚪 Salir
+      </button>
+    </div>
+  </header>
+  
+  <!-- Área de mensajes -->
+  <main class="chat-messages" #messagesContainer>
+    
+    <!-- Mensaje de bienvenida cuando no hay mensajes -->
+    <div class="welcome-message" *ngIf="mensajes.length === 0 && !cargandoHistorial">
+      <div class="welcome-content">
+        <div class="welcome-icon">🤖</div>
+        <h2>¡Hola! Soy tu asistente virtual</h2>
+        <p>Puedo ayudarte con preguntas, programación, tareas cotidianas y mucho más.</p>
+        <p class="welcome-tip">💡 <strong>Consejo:</strong> Sé específico en tus preguntas para obtener mejores respuestas.</p>
+      </div>
+    </div>
+    
+    <!-- Indicador de carga del historial -->
+    <div class="loading-history" *ngIf="cargandoHistorial">
+      <div class="loading-spinner"></div>
+      <p>Cargando tu historial de conversaciones...</p>
+    </div>
+    
+    <!-- Lista de mensajes -->
+    <div class="messages-list">
+      <div 
+        *ngFor="let mensaje of mensajes; trackBy: trackByMensaje"
+        class="message-wrapper"
+        [class.user-message]="mensaje.tipo === 'usuario'"
+        [class.assistant-message]="mensaje.tipo === 'asistente'">
+        
+        <!-- Mensaje del usuario -->
+        <div class="message user-msg" *ngIf="mensaje.tipo === 'usuario'">
+          <div class="message-content">
+            <p>{{ mensaje.contenido }}</p>
+          </div>
+          <div class="message-time">
+            {{ formatearHora(mensaje.fechaEnvio) }}
+          </div>
+        </div>
+        
+        <!-- Mensaje del asistente -->
+        <div class="message assistant-msg" *ngIf="mensaje.tipo === 'asistente'">
+          <div class="message-avatar">🤖</div>
+          <div class="message-bubble">
+            <div class="message-content">
+              <p [innerHTML]="formatearMensajeAsistente(mensaje.contenido)"></p>
+            </div>
+            <div class="message-time">
+              {{ formatearHora(mensaje.fechaEnvio) }}
+              <span *ngIf="mensaje.estado === 'error'" class="error-indicator">⚠️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Indicador de que el asistente está escribiendo -->
+      <div class="message-wrapper assistant-message" *ngIf="asistenteEscribiendo">
+        <div class="message assistant-msg typing">
+          <div class="message-avatar">🤖</div>
+          <div class="message-bubble">
+            <div class="typing-indicator">
+              <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <p class="typing-text">El asistente está escribiendo...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Formulario para enviar mensajes -->
+  <footer class="chat-input">
+    <form class="input-form" (ngSubmit)="enviarMensaje()" #chatForm="ngForm">
+      <div class="input-wrapper">
+        <textarea
+          #messageInput
+          [(ngModel)]="mensajeTexto"
+          name="mensaje"
+          placeholder="Escribe tu mensaje aquí... (presiona Enter para enviar, Shift+Enter para nueva línea)"
+          class="message-input"
+          [disabled]="enviandoMensaje || asistenteEscribiendo"
+          (keydown)="manejarTeclaPresionada($event)"
+          rows="1">
+        </textarea>
+        
+        <button 
+          type="submit"
+          class="send-btn"
+          [disabled]="!mensajeTexto.trim() || enviandoMensaje || asistenteEscribiendo"
+          [class.sending]="enviandoMensaje">
+          
+          <!-- Icono de envío o spinner -->
+          <span *ngIf="!enviandoMensaje">📤</span>
+          <span class="sending-spinner" *ngIf="enviandoMensaje"></span>
+        </button>
+      </div>
+      
+      <!-- Información del estado -->
+      <div class="input-status" *ngIf="mensajeError">
+        <span class="error-text">❌ {{ mensajeError }}</span>
+      </div>
+    </form>
+  </footer>
+  
+</div>
