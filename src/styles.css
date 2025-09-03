@@ -1,1 +1,225 @@
-/* You can add global styles to this file, and also import other style files */
+/**
+ * Estilos globales de la aplicación Angular 20 + Firebase + ChatGPT
+ * 
+ * Estos estilos se aplican a toda la aplicación y establecen:
+ * - Reset de estilos del navegador
+ * - Tipografía base
+ * - Variables CSS para consistencia
+ * - Utilidades comunes
+ * 
+ * @autor Sergie Code - Tutorial Angular 20 + Firebase
+ */
+
+/* ============================================
+   RESET Y CONFIGURACIÓN BASE
+   ============================================ */
+
+/* Reset básico para consistencia entre navegadores */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Configuración base del HTML y body */
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+/* ============================================
+   VARIABLES CSS PARA CONSISTENCIA
+   ============================================ */
+
+:root {
+  /* Colores principales de la aplicación */
+  --color-primary: #667eea;
+  --color-secondary: #764ba2;
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-error: #f44336;
+  --color-info: #2196f3;
+  
+  /* Colores de texto */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-light: #999999;
+  
+  /* Colores de fondo */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-dark: #2c3e50;
+  
+  /* Espaciados */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Bordes */
+  --border-radius: 8px;
+  --border-radius-large: 16px;
+  
+  /* Sombras */
+  --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-medium: 0 4px 8px rgba(0,0,0,0.15);
+  --shadow-heavy: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* ============================================
+   CLASES UTILITARIAS GLOBALES
+   ============================================ */
+
+/* Utilidades de texto */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+/* Utilidades de color */
+.text-primary { color: var(--color-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-success { color: var(--color-success); }
+.text-error { color: var(--color-error); }
+
+/* Utilidades de espaciado */
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+
+/* Utilidades de display */
+.d-flex { display: flex; }
+.d-block { display: block; }
+.d-none { display: none; }
+
+/* Utilidades de flexbox */
+.justify-center { justify-content: center; }
+.align-center { align-items: center; }
+.flex-column { flex-direction: column; }
+
+/* ============================================
+   ESTILOS PARA ELEMENTOS COMUNES
+   ============================================ */
+
+/* Botones base */
+.btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Inputs base */
+.input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 100%;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Cards */
+.card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--shadow-light);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ============================================
+   ANIMACIONES Y TRANSICIONES
+   ============================================ */
+
+/* Animación de fade in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Animación de spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+  }
+  
+  .card {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  :root {
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+  }
+  
+  body {
+    font-size: 14px;
+  }
+}

@@ -1,13 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
+  <!-- Configuración de caracteres UTF-8 para soporte completo de español -->
   <meta charset="utf-8">
-  <title>Angular20FirebaseChat</title>
+  
+  <!-- Título de la aplicación que aparece en la pestaña del navegador -->
+  <title>Chat Asistente - Angular 20 + Firebase + ChatGPT</title>
+  
+  <!-- Base href para el routing de Angular -->
   <base href="/">
+  
+  <!-- Configuración de viewport para diseño responsivo en móviles -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Meta tags para SEO y redes sociales -->
+  <meta name="description" content="Aplicación de chat con inteligencia artificial usando Angular 20, Firebase y ChatGPT. Tutorial de Sergie Code.">
+  <meta name="author" content="Sergie Code">
+  <meta name="keywords" content="Angular 20, Firebase, ChatGPT, Chat, IA, Tutorial, Sergie Code">
+  
+  <!-- Configuración para PWA -->
+  <meta name="theme-color" content="#667eea">
+  
+  <!-- Preload de fuentes para mejor rendimiento -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
-  <app-root></app-root>
+  <!-- 
+    Elemento raíz donde Angular montará la aplicación 
+    Este elemento será reemplazado por el componente App
+  -->
+  <app-root>
+    <!-- Mensaje de carga mientras Angular se inicializa -->
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
+      <div style="text-align: center;">
+        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+        <p>Cargando Chat Asistente...</p>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </div>
+    </div>
+  </app-root>
 </body>
 </html>

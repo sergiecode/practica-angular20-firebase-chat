@@ -1,7 +1,15 @@
 /**
- * Configuración de rutas de la aplicación
- * Define las páginas y componentes que se muestran según la URL
- * Utiliza lazy loading para optimizar la carga de la aplicación
+ * Configuración de rutas de la aplicación Angular 20
+ * 
+ * Este archivo define todas las rutas (URLs) de nuestra aplicación y qué
+ * componentes se deben mostrar para cada ruta. Utiliza lazy loading
+ * para optimizar la carga inicial de la aplicación.
+ * 
+ * Conceptos importantes:
+ * - Lazy Loading: Los componentes se cargan solo cuando se necesitan
+ * - Route Guards: Se pueden añadir para proteger rutas (authGuard, etc.)
+ * - Route Parameters: Se pueden pasar parámetros en las URLs
+ * - Route Resolution: Se pueden cargar datos antes de mostrar el componente
  * 
  * @autor Sergie Code - Tutorial Angular 20 + Firebase
  */
@@ -9,28 +17,34 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  // Ruta por defecto - redirige al login/registro
+  // Ruta por defecto - Redirige automáticamente al componente de autenticación
+  // Cuando alguien visita la raíz del sitio (/), lo enviamos a /auth
   {
     path: '',
     redirectTo: '/auth',
-    pathMatch: 'full'
+    pathMatch: 'full' // Solo redirigir si la ruta es exactamente '/'
   },
   
-  // Ruta de autenticación (login/registro)
+  // Ruta de autenticación (login/registro con Google)
+  // Utiliza lazy loading: el código del componente se carga solo cuando se necesita
   {
     path: 'auth',
     loadComponent: () => import('./components/auth.component').then(m => m.AuthComponent),
-    title: 'Iniciar Sesión - Chat Asistente'
+    title: 'Iniciar Sesión - Chat Asistente' // Título que aparece en la pestaña del navegador
   },
   
-  // Ruta del chat principal
+  // Ruta del chat principal donde ocurre la conversación
+  // También con lazy loading para optimizar la carga inicial
   {
     path: 'chat',
     loadComponent: () => import('./components/chat.component').then(m => m.ChatComponent),
     title: 'Chat - Asistente Virtual'
+    // Aquí se podría añadir un canActivate guard para verificar autenticación:
+    // canActivate: [authGuard]
   },
   
-  // Ruta wildcard - redirige cualquier URL inválida al auth
+  // Ruta wildcard - Captura cualquier URL que no coincida con las anteriores
+  // Útil para manejar URLs incorrectas o páginas que no existen (404)
   {
     path: '**',
     redirectTo: '/auth'
