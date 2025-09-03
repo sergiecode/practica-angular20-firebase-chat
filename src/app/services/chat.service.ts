@@ -100,6 +100,7 @@ export class ChatService {
     }
     
     console.log('📤 Enviando mensaje del usuario:', contenidoMensaje);
+    console.log('👤 Usuario actual:', usuarioActual);
     
     // Creamos el mensaje del usuario
     const mensajeUsuario: MensajeChat = {
@@ -111,8 +112,21 @@ export class ChatService {
     };
     
     try {
-      // Guardamos el mensaje del usuario en Firestore
-      await this.firestoreService.guardarMensaje(mensajeUsuario);
+      console.log('💾 Intentando guardar mensaje del usuario...');
+      
+      // PRIMERO mostramos el mensaje del usuario en la UI inmediatamente
+      const mensajesDelUsuario = this.mensajesSubject.value;
+      this.mensajesSubject.next([...mensajesDelUsuario, mensajeUsuario]);
+      console.log('✅ Mensaje del usuario mostrado en la UI');
+      
+      // DESPUÉS intentamos guardarlo en Firestore (en background)
+      try {
+        await this.firestoreService.guardarMensaje(mensajeUsuario);
+        console.log('✅ Mensaje del usuario guardado exitosamente en Firestore');
+      } catch (firestoreError) {
+        console.warn('⚠️ Error al guardar mensaje del usuario en Firestore:', firestoreError);
+        // El mensaje ya está visible, así que continuamos
+      }
       
       // Indicamos que el asistente está procesando la respuesta
       this.asistenteRespondiendo.next(true);
@@ -144,10 +158,20 @@ export class ChatService {
         estado: 'enviado'
       };
       
-      // Guardamos la respuesta del asistente en Firestore
-      await this.firestoreService.guardarMensaje(mensajeAsistente);
+      // PRIMERO mostramos la respuesta en la UI inmediatamente
+      const mensajesActualizados = this.mensajesSubject.value;
+      this.mensajesSubject.next([...mensajesActualizados, mensajeAsistente]);
+      console.log('✅ Respuesta del asistente mostrada en la UI');
       
-      console.log('💾 Respuesta del asistente guardada exitosamente');
+      // DESPUÉS intentamos guardar en Firestore (en background)
+      try {
+        console.log('💾 Intentando guardar mensaje del asistente en Firestore...');
+        await this.firestoreService.guardarMensaje(mensajeAsistente);
+        console.log('💾 Respuesta del asistente guardada exitosamente en Firestore');
+      } catch (firestoreError) {
+        console.warn('⚠️ Error al guardar en Firestore, pero el mensaje ya se muestra:', firestoreError);
+        // El mensaje ya está visible, así que no es crítico
+      }
       
     } catch (error) {
       console.error('❌ Error al procesar mensaje:', error);
@@ -161,8 +185,15 @@ export class ChatService {
         estado: 'error'
       };
       
-      // Guardamos el mensaje de error
-      await this.firestoreService.guardarMensaje(mensajeError);
+      try {
+        // Guardamos el mensaje de error
+        await this.firestoreService.guardarMensaje(mensajeError);
+      } catch (saveErrorError) {
+        console.error('❌ Error al guardar mensaje de error:', saveErrorError);
+        // Como último recurso, mostramos el error temporalmente en la UI
+        const mensajesActuales = this.mensajesSubject.value;
+        this.mensajesSubject.next([...mensajesActuales, mensajeError]);
+      }
       
       throw error;
       

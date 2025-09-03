@@ -22,7 +22,7 @@ export interface MensajeChat {
   tipo: 'usuario' | 'asistente';
   
   // Estado del mensaje (para mostrar indicadores de carga, etc.)
-  estado?: 'enviando' | 'enviado' | 'error';
+  estado?: 'enviando' | 'enviado' | 'error' | 'temporal';
 }
 
 /**

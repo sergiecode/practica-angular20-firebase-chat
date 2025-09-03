@@ -1,8 +1,20 @@
+npm install firebase
+npm install -g firebase-tools
+firebase login
+firebase init
+firebase deploy
+
 # 💬 Angular 20 + Firebase + ChatGPT - Aplicación de Chat Moderna
 
 Una aplicación de chat en tiempo real construida con **Angular 20**, **Firebase** y **OpenAI ChatGPT**, utilizando componentes standalone y diseño responsivo con UI completamente en español.
 
-## 🚀 Características Principales
+## � **IMPORTANTE: Configuración de API Keys**
+
+**Este proyecto requiere configuración de claves API que NO están incluidas por seguridad.**
+
+👉 **[Lee las instrucciones de configuración aquí](ENVIRONMENT_SETUP.md)** 👈
+
+## �🚀 Características Principales
 
 - ✅ **Angular 20** con arquitectura de componentes standalone (sin NgModules)
 - ✅ **Autenticación con Google** usando Firebase Auth

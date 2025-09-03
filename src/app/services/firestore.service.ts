@@ -21,6 +21,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { MensajeChat, ConversacionChat } from '../models/chat.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   // Este servicio estará disponible en toda la aplicación
@@ -41,24 +42,46 @@ export class FirestoreService {
   async guardarMensaje(mensaje: MensajeChat): Promise<void> {
     try {
       console.log('💾 Guardando mensaje en Firestore...', mensaje);
+      console.log('🔍 Firebase config check:', environment.firebaseConfig.projectId);
+      
+      // Validamos que tenemos todos los datos requeridos
+      if (!mensaje.usuarioId) {
+        throw new Error('usuarioId es requerido');
+      }
+      if (!mensaje.contenido) {
+        throw new Error('contenido es requerido');
+      }
+      if (!mensaje.tipo) {
+        throw new Error('tipo es requerido');
+      }
       
       // Obtenemos la referencia a la colección 'mensajes'
       const coleccionMensajes = collection(this.firestore, 'mensajes');
       
       // Preparamos el mensaje para guardarlo, convirtiendo la fecha a Timestamp de Firebase
       const mensajeParaGuardar = {
-        ...mensaje,
+        usuarioId: mensaje.usuarioId,
+        contenido: mensaje.contenido,
+        tipo: mensaje.tipo,
+        estado: mensaje.estado || 'enviado',
         // Firebase requiere usar Timestamp en lugar de Date
         fechaEnvio: Timestamp.fromDate(mensaje.fechaEnvio)
       };
       
+      console.log('📤 Datos validados para guardar:', mensajeParaGuardar);
+      
       // Añadimos el documento a la colección
-      await addDoc(coleccionMensajes, mensajeParaGuardar);
+      const docRef = await addDoc(coleccionMensajes, mensajeParaGuardar);
       
-      console.log('✅ Mensaje guardado exitosamente en Firestore');
+      console.log('✅ Mensaje guardado exitosamente en Firestore con ID:', docRef.id);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error al guardar mensaje en Firestore:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       throw error;
     }
   }

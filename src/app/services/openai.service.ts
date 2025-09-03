@@ -107,8 +107,8 @@ export class OpenaiService {
     const cuerposPeticion: PeticionOpenAI = {
       model: 'gpt-3.5-turbo',  // Usamos GPT-3.5 por ser más económico y rápido
       messages: mensajes,
-      max_tokens: 500,         // Limitamos la respuesta a 500 tokens
-      temperature: 0.7         // Equilibrio entre creatividad y coherencia
+      max_tokens: 150,         // Reducido a 150 tokens para ahorrar costos
+      temperature: 0.5         // Reducido para respuestas más consistentes
     };
 
     console.log('📤 Enviando petición a OpenAI...', {
