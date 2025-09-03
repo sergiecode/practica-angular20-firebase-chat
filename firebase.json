@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/angular20-firebase-chat",
+    "public": "dist/angular20-firebase-chat/browser",
     "ignore": [
       "firebase.json",
       "**/.*",

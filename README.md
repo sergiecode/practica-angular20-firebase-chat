@@ -578,11 +578,11 @@ firebase deploy
 
 #### 15.6. Script de Deploy Automatizado
 
-**Agregar a `package.json`:**
+**Scripts agregados a `package.json`:**
 ```json
 {
   "scripts": {
-    "deploy": "ng build --configuration=production && firebase deploy",
+    "deploy": "ng build && firebase deploy",
     "deploy:quick": "firebase deploy --only hosting"
   }
 }
@@ -595,6 +595,16 @@ npm run deploy
 
 # Deploy rápido (solo archivos ya construidos)
 npm run deploy:quick
+```
+
+**Nota importante**: En Angular 20, los archivos se generan en `dist/angular20-firebase-chat/browser`, por lo que el `firebase.json` debe estar configurado correctamente:
+
+```json
+{
+  "hosting": {
+    "public": "dist/angular20-firebase-chat/browser"
+  }
+}
 ```
 
 ---
@@ -728,9 +738,11 @@ ng build --configuration=production  # Build de producción
 npm test                    # Ejecutar tests
 ng test --watch=false       # Tests sin watch mode
 
-# Firebase
-firebase serve             # Probar build localmente
-firebase deploy            # Desplegar a producción
+# Despliegue en Firebase
+npm run deploy              # Build + Deploy completo
+npm run deploy:quick        # Deploy rápido (solo hosting)
+firebase serve              # Probar build localmente
+firebase deploy             # Desplegar a producción
 firebase deploy --only hosting  # Solo hosting
 
 # Utilidades
@@ -926,6 +938,26 @@ Este proyecto se proporciona como material educativo. Siéntete libre de usarlo,
 2. **Consulta** la documentación técnica complementaria
 3. **Verifica** que hayas seguido todos los pasos
 4. **Comenta** en el video de YouTube del tutorial
+
+---
+
+### 🎉 **¡Aplicación Desplegada Exitosamente!**
+
+**Tu aplicación ya está en línea en**: https://practica-angular20-chat-llm.web.app
+
+#### ✅ **Scripts de despliegue disponibles:**
+```bash
+# Deploy completo (recomendado)
+npm run deploy              # Hace build y deploy automáticamente
+
+# Deploy rápido (si ya hiciste build)
+npm run deploy:quick        # Solo sube archivos al hosting
+```
+
+#### 📋 **Configuración importante post-despliegue:**
+1. **Dominios autorizados**: Agrega `practica-angular20-chat-llm.web.app` en Firebase Console → Authentication → Settings → Authorized domains
+2. **Reglas de Firestore**: Verifica que solo usuarios autenticados puedan acceder a los datos
+3. **Variables de entorno**: Asegúrate de que todas las API keys estén configuradas correctamente
 
 ---
 
