@@ -266,19 +266,4 @@ export class ChatService {
     return usuarioAutenticado && openaiConfigurado;
   }
 
-  /**
-   * Obtiene estadísticas básicas del chat actual
-   * 
-   * @returns Objeto con estadísticas del chat
-   */
-  obtenerEstadisticas() {
-    const mensajes = this.mensajesSubject.value;
-    
-    return {
-      totalMensajes: mensajes.length,
-      mensajesUsuario: mensajes.filter(m => m.tipo === 'usuario').length,
-      mensajesAsistente: mensajes.filter(m => m.tipo === 'asistente').length,
-      ultimaActividad: mensajes.length > 0 ? mensajes[mensajes.length - 1].fechaEnvio : null
-    };
-  }
 }

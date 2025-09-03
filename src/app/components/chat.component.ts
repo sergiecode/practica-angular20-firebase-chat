@@ -46,14 +46,6 @@ import { MensajeChat } from '../models/chat.model';
         </div>
         
         <div class="header-actions">
-          <!-- Botón de estadísticas -->
-          <button 
-            class="stats-btn"
-            (click)="mostrarEstadisticas = !mostrarEstadisticas"
-            title="Ver estadísticas">
-            📊
-          </button>
-          
           <!-- Botón de cerrar sesión -->
           <button 
             class="logout-btn" 
@@ -63,31 +55,6 @@ import { MensajeChat } from '../models/chat.model';
           </button>
         </div>
       </header>
-      
-      <!-- Panel de estadísticas (opcional) -->
-      <div class="stats-panel" *ngIf="mostrarEstadisticas">
-        <div class="stats-content">
-          <h4>📈 Estadísticas de tu Chat</h4>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <span class="stat-label">Total mensajes:</span>
-              <span class="stat-value">{{ estadisticas.totalMensajes }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Tus mensajes:</span>
-              <span class="stat-value">{{ estadisticas.mensajesUsuario }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Respuestas IA:</span>
-              <span class="stat-value">{{ estadisticas.mensajesAsistente }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Última actividad:</span>
-              <span class="stat-value">{{ formatearFecha(estadisticas.ultimaActividad) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
       
       <!-- Área de mensajes -->
       <main class="chat-messages" #messagesContainer>
@@ -219,15 +186,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   asistenteEscribiendo = false;          // Indica si el asistente está generando una respuesta
   cargandoHistorial = false;             // Indica si se está cargando el historial
   mensajeError = '';                     // Mensaje de error para mostrar al usuario
-  mostrarEstadisticas = false;           // Controla si se muestran las estadísticas
-  
-  // Estadísticas del chat
-  estadisticas = {
-    totalMensajes: 0,
-    mensajesUsuario: 0,
-    mensajesAsistente: 0,
-    ultimaActividad: null as Date | null
-  };
   
   // Suscripciones a observables
   private suscripciones: Subscription[] = [];
@@ -337,7 +295,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.mensajes = mensajes;
       console.log(`📨 this.mensajes actualizado a ${this.mensajes.length} elementos`);
       
-      this.actualizarEstadisticas();
       this.debeHacerScroll = true;
       
       console.log(`📨 === FIN RECEPCIÓN MENSAJES ===`);
@@ -354,13 +311,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     
     this.suscripciones.push(subMensajes, subAsistente);
     console.log('✅ Suscripciones configuradas correctamente');
-  }
-
-  /**
-   * Actualiza las estadísticas del chat
-   */
-  private actualizarEstadisticas(): void {
-    this.estadisticas = this.chatService.obtenerEstadisticas();
   }
 
   /**
@@ -465,21 +415,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    */
   formatearHora(fecha: Date): string {
     return fecha.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  /**
-   * Formatea una fecha completa
-   */
-  formatearFecha(fecha: Date | null): string {
-    if (!fecha) return 'N/A';
-    
-    return fecha.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
