@@ -22,6 +22,7 @@ Esta aplicación incluye:
 - ✅ **Signals de Angular** para manejo reactivo del estado
 - ✅ **Dependency Injection** usando la nueva sintaxis inject()
 - ✅ **Autenticación con Google** usando Firebase Auth
+- ✅ **Route Guards** para protección automática de rutas
 - ✅ **Chat en tiempo real** con persistencia en Firestore
 - ✅ **Integración con ChatGPT** para respuestas de IA inteligentes
 - ✅ **Manejo de errores** robusto en toda la aplicación
@@ -276,6 +277,7 @@ export const appConfig: ApplicationConfig = {
 **Editar `src/app/app.routes.ts`:**
 ```typescript
 import { Routes } from '@angular/router';
+import { AuthGuard } from './guards';
 
 export const routes: Routes = [
   { 
@@ -289,7 +291,8 @@ export const routes: Routes = [
   },
   { 
     path: 'chat', 
-    loadComponent: () => import('./components/chat/chat.component').then(m => m.ChatComponent)
+    loadComponent: () => import('./components/chat/chat.component').then(m => m.ChatComponent),
+    canActivate: [AuthGuard] // 🛡️ Ruta protegida con Auth Guard
   },
   { 
     path: '**', 
@@ -297,6 +300,66 @@ export const routes: Routes = [
   }
 ];
 ```
+
+---
+
+### 🛡️ Paso 9.1: Implementar Route Guards para Seguridad
+
+Los Route Guards añaden una capa crucial de seguridad que protege rutas antes de que se carguen los componentes.
+
+#### ¿Por qué son importantes los Route Guards?
+
+1. **Seguridad mejorada**: Previenen acceso directo a URLs protegidas
+2. **Eficiencia**: Se ejecutan antes de cargar componentes (ahorra recursos)
+3. **UX mejorada**: Redirección automática sin mostrar contenido no autorizado
+4. **Protección real**: Funcionan con navegación directa en URL y programática
+
+#### Crear el Auth Guard
+
+**Crear `src/app/guards/auth.guard.ts`:**
+```typescript
+import { Injectable, inject } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { AuthService } from '../services/auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
+  
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  canActivate(): Observable<boolean> {
+    return this.authService.estaAutenticado$.pipe(
+      tap(estaAutenticado => {
+        if (!estaAutenticado) {
+          console.log('🚫 Acceso denegado - Usuario no autenticado');
+          this.router.navigate(['/auth']);
+        } else {
+          console.log('✅ Acceso permitido - Usuario autenticado');
+        }
+      }),
+      map(estaAutenticado => estaAutenticado)
+    );
+  }
+}
+```
+
+**Crear `src/app/guards/index.ts`:**
+```typescript
+export { AuthGuard } from './auth.guard';
+```
+
+#### Beneficios de Seguridad Implementados:
+
+- ✅ **Protección de URLs**: Imposible acceder a `/chat` sin autenticación
+- ✅ **Redirección automática**: Usuario no autenticado va automáticamente a `/auth`
+- ✅ **Sin carga innecesaria**: El componente Chat no se carga si no está autorizado
+- ✅ **Funciona en todos los escenarios**: URL directa, navegación programática, etc.
+- ✅ **Feedback visual**: Logs en consola para debugging
 
 ---
 
@@ -626,6 +689,9 @@ src/
 │   │   ├── auth/            # Autenticación con Google
 │   │   ├── chat/            # Interfaz del chat
 │   │   └── index.ts         # Barrel exports
+│   ├── guards/              # Route Guards para seguridad
+│   │   ├── auth.guard.ts    # Guard de autenticación
+│   │   └── index.ts         # Exports de guards
 │   ├── models/              # Interfaces TypeScript
 │   │   ├── usuario.model.ts # Modelo de usuario
 │   │   └── chat.model.ts    # Modelo de mensajes
@@ -677,11 +743,13 @@ ng lint                        # Verificar código
 
 ## 🎯 Funcionalidades Principales
 
-### ✅ **Autenticación**
+### ✅ **Autenticación y Seguridad**
 - Login con Google OAuth 2.0
 - Gestión de estado del usuario
+- Route Guards para protección automática de rutas
 - Redirección automática según autenticación
 - Logout seguro
+- Protección contra acceso no autorizado a URLs
 
 ### ✅ **Chat en Tiempo Real**
 - Mensajes persistentes en Firestore
@@ -759,6 +827,7 @@ Al completar este tutorial, habrás dominado:
 - ✅ **TypeScript** avanzado con tipado fuerte
 - ✅ **RxJS** para programación reactiva
 - ✅ **Dependency Injection** con sintaxis `inject()`
+- ✅ **Route Guards** para protección de rutas
 - ✅ **Signals** para gestión del estado
 - ✅ **CSS Grid/Flexbox** para layouts responsivos
 

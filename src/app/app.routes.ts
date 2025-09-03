@@ -15,6 +15,7 @@
  */
 
 import { Routes } from '@angular/router';
+import { AuthGuard } from './guards';
 
 export const routes: Routes = [
   // Ruta por defecto - Redirige automáticamente al componente de autenticación
@@ -35,12 +36,12 @@ export const routes: Routes = [
   
   // Ruta del chat principal donde ocurre la conversación
   // También con lazy loading para optimizar la carga inicial
+  // ✅ PROTEGIDA CON AUTH GUARD - Solo usuarios autenticados pueden acceder
   {
     path: 'chat',
     loadComponent: () => import('./components/chat').then(m => m.ChatComponent),
-    title: 'Chat - Asistente Virtual'
-    // Aquí se podría añadir un canActivate guard para verificar autenticación:
-    // canActivate: [authGuard]
+    title: 'Chat - Asistente Virtual',
+    canActivate: [AuthGuard] // 🛡️ Protección de ruta implementada
   },
   
   // Ruta wildcard - Captura cualquier URL que no coincida con las anteriores
