@@ -45,7 +45,9 @@ export class ChatService {
    * @param usuarioId - ID del usuario para cargar su historial
    */
   async inicializarChat(usuarioId: string): Promise<void> {
-    console.log('🚀 Inicializando chat para usuario:', usuarioId);
+    console.log('🚀 === INICIALIZANDO CHAT ===');
+    console.log('🚀 Usuario ID:', usuarioId);
+    console.log('🚀 Estado actual mensajes:', this.mensajesSubject.value.length);
     
     if (this.cargandoHistorial) {
       console.log('⏳ Ya se está cargando el historial, esperando...');
@@ -55,14 +57,26 @@ export class ChatService {
     this.cargandoHistorial = true;
     
     try {
+      console.log('📡 Configurando listener de Firestore...');
+      
       // Nos suscribimos a los mensajes del usuario en tiempo real
       this.firestoreService.obtenerMensajesUsuario(usuarioId).subscribe({
         next: (mensajes) => {
-          console.log(`📨 Historial cargado: ${mensajes.length} mensajes`);
+          console.log(`📨 === HISTORIAL CARGADO DESDE FIRESTORE ===`);
+          console.log(`📨 Cantidad de mensajes en Firestore: ${mensajes.length}`);
+          console.log(`📨 Mensajes del historial:`, mensajes.map(m => ({ 
+            tipo: m.tipo, 
+            contenido: m.contenido.substring(0, 50),
+            fecha: m.fechaEnvio,
+            id: m.id
+          })));
           
           // Actualizamos el BehaviorSubject con los mensajes obtenidos
           this.mensajesSubject.next(mensajes);
+          console.log(`📨 BehaviorSubject actualizado con ${this.mensajesSubject.value.length} mensajes`);
+          
           this.cargandoHistorial = false;
+          console.log(`📨 === FIN CARGA HISTORIAL ===`);
         },
         error: (error) => {
           console.error('❌ Error al cargar historial:', error);
@@ -72,6 +86,8 @@ export class ChatService {
           this.mensajesSubject.next([]);
         }
       });
+      
+      console.log('✅ Listener de Firestore configurado');
       
     } catch (error) {
       console.error('❌ Error al inicializar chat:', error);
@@ -86,6 +102,10 @@ export class ChatService {
    * @param contenidoMensaje - El texto del mensaje que envía el usuario
    */
   async enviarMensaje(contenidoMensaje: string): Promise<void> {
+    console.log('🚀 === INICIO ENVIAR MENSAJE ===');
+    console.log('📝 Contenido a enviar:', contenidoMensaje);
+    console.log('📊 Estado actual mensajes:', this.mensajesSubject.value.length);
+    
     // Obtenemos el usuario actual
     const usuarioActual = this.authService.obtenerUsuarioActual();
     
@@ -113,11 +133,18 @@ export class ChatService {
     
     try {
       console.log('💾 Intentando guardar mensaje del usuario...');
+      console.log('📋 Mensaje usuario creado:', mensajeUsuario);
       
       // PRIMERO mostramos el mensaje del usuario en la UI inmediatamente
       const mensajesDelUsuario = this.mensajesSubject.value;
-      this.mensajesSubject.next([...mensajesDelUsuario, mensajeUsuario]);
+      console.log('📊 Mensajes antes de agregar usuario:', mensajesDelUsuario.length);
+      
+      const nuevosMatches = [...mensajesDelUsuario, mensajeUsuario];
+      this.mensajesSubject.next(nuevosMatches);
+      
+      console.log('📊 Mensajes después de agregar usuario:', this.mensajesSubject.value.length);
       console.log('✅ Mensaje del usuario mostrado en la UI');
+      console.log('🔍 Estado actual del BehaviorSubject:', this.mensajesSubject.value.map(m => ({ tipo: m.tipo, contenido: m.contenido.substring(0, 50) })));
       
       // DESPUÉS intentamos guardarlo en Firestore (en background)
       try {
@@ -160,8 +187,14 @@ export class ChatService {
       
       // PRIMERO mostramos la respuesta en la UI inmediatamente
       const mensajesActualizados = this.mensajesSubject.value;
-      this.mensajesSubject.next([...mensajesActualizados, mensajeAsistente]);
+      console.log('📊 Mensajes antes de agregar asistente:', mensajesActualizados.length);
+      
+      const nuevosMatches2 = [...mensajesActualizados, mensajeAsistente];
+      this.mensajesSubject.next(nuevosMatches2);
+      
+      console.log('📊 Mensajes después de agregar asistente:', this.mensajesSubject.value.length);
       console.log('✅ Respuesta del asistente mostrada en la UI');
+      console.log('🔍 Estado final del BehaviorSubject:', this.mensajesSubject.value.map(m => ({ tipo: m.tipo, contenido: m.contenido.substring(0, 50) })));
       
       // DESPUÉS intentamos guardar en Firestore (en background)
       try {

@@ -299,15 +299,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private async inicializarChat(): Promise<void> {
     if (!this.usuario) return;
     
+    console.log('🎬 === INICIALIZANDO CHAT EN COMPONENTE ===');
+    console.log('🎬 Usuario para inicializar:', this.usuario.uid);
+    
     this.cargandoHistorial = true;
     
     try {
       // Inicializamos el chat con el ID del usuario
       await this.chatService.inicializarChat(this.usuario.uid);
-      console.log('✅ Chat inicializado correctamente');
+      console.log('✅ Chat inicializado correctamente en componente');
       
     } catch (error) {
-      console.error('❌ Error al inicializar chat:', error);
+      console.error('❌ Error al inicializar chat en componente:', error);
       throw error;
       
     } finally {
@@ -319,16 +322,30 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    * Configura las suscripciones a los observables del servicio
    */
   private configurarSuscripciones(): void {
+    console.log('🔗 Configurando suscripciones del componente...');
+    
     // Suscribirse a los mensajes del chat
     const subMensajes = this.chatService.mensajes$.subscribe(mensajes => {
-      console.log(`📨 Recibidos ${mensajes.length} mensajes`);
+      console.log(`📨 === COMPONENTE RECIBIÓ MENSAJES ===`);
+      console.log(`📨 Cantidad: ${mensajes.length} mensajes`);
+      console.log(`📨 Mensajes recibidos:`, mensajes.map(m => ({ 
+        tipo: m.tipo, 
+        contenido: m.contenido.substring(0, 50),
+        id: m.id || 'sin-id'
+      })));
+      
       this.mensajes = mensajes;
+      console.log(`📨 this.mensajes actualizado a ${this.mensajes.length} elementos`);
+      
       this.actualizarEstadisticas();
       this.debeHacerScroll = true;
+      
+      console.log(`📨 === FIN RECEPCIÓN MENSAJES ===`);
     });
     
     // Suscribirse al estado del asistente
     const subAsistente = this.chatService.asistenteRespondiendo$.subscribe(respondiendo => {
+      console.log(`🤖 Estado asistente cambiado: ${respondiendo ? 'escribiendo' : 'esperando'}`);
       this.asistenteEscribiendo = respondiendo;
       if (respondiendo) {
         this.debeHacerScroll = true;
@@ -336,6 +353,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
     
     this.suscripciones.push(subMensajes, subAsistente);
+    console.log('✅ Suscripciones configuradas correctamente');
   }
 
   /**

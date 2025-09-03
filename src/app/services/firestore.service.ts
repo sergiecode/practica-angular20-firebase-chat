@@ -98,23 +98,35 @@ export class FirestoreService {
     
     return new Observable(observer => {
       // Creamos una consulta para obtener solo los mensajes del usuario especificado
+      // NOTA: Removemos temporalmente orderBy para evitar el problema del índice
       const consulta = query(
         collection(this.firestore, 'mensajes'),
         // Filtramos por el ID del usuario
-        where('usuarioId', '==', usuarioId),
-        // Ordenamos por fecha de envío (más antiguos primero)
-        orderBy('fechaEnvio', 'asc')
+        where('usuarioId', '==', usuarioId)
+        // Comentamos temporalmente el orderBy hasta crear el índice
+        // orderBy('fechaEnvio', 'asc')
       );
 
       // Configuramos el listener en tiempo real
       const unsubscribe = onSnapshot(
         consulta,
         (snapshot: QuerySnapshot<DocumentData>) => {
-          console.log('🔄 Nuevos datos recibidos de Firestore');
+          console.log('🔄 === FIRESTORE SNAPSHOT RECIBIDO ===');
+          console.log('🔄 Cantidad de documentos:', snapshot.docs.length);
+          console.log('🔄 Es del cache:', snapshot.metadata.fromCache);
+          console.log('🔄 Tiene cambios pendientes:', snapshot.metadata.hasPendingWrites);
           
           // Transformamos los documentos de Firestore en nuestros objetos MensajeChat
           const mensajes: MensajeChat[] = snapshot.docs.map(doc => {
             const data = doc.data();
+            
+            console.log('📄 Documento procesado:', {
+              id: doc.id,
+              usuarioId: data['usuarioId'],
+              tipo: data['tipo'],
+              contenido: data['contenido'].substring(0, 50),
+              fechaEnvio: data['fechaEnvio']?.toDate()
+            });
             
             return {
               id: doc.id,
@@ -127,7 +139,11 @@ export class FirestoreService {
             } as MensajeChat;
           });
           
-          console.log(`📨 Se obtuvieron ${mensajes.length} mensajes`);
+          // ORDENAMOS en el cliente ya que removimos orderBy de la query
+          mensajes.sort((a, b) => a.fechaEnvio.getTime() - b.fechaEnvio.getTime());
+          
+          console.log(`📨 Total mensajes procesados y ordenados: ${mensajes.length}`);
+          console.log('📨 === FIN SNAPSHOT FIRESTORE ===');
           
           // Emitimos los mensajes a través del Observable
           observer.next(mensajes);
