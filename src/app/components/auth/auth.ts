@@ -9,7 +9,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   // Selector único para este componente
@@ -22,10 +22,10 @@ import { AuthService } from '../services/auth.service';
   imports: [CommonModule],
   
   // Template HTML del componente
-  templateUrl: './auth.component.html',
+  templateUrl: './auth.html',
   
   // Estilos CSS específicos para este componente
-  styleUrl: './auth.component.css'
+  styleUrl: './auth.css'
 })
 export class AuthComponent {
   

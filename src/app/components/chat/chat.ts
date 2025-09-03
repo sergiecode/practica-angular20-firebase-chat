@@ -12,9 +12,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
-import { AuthService } from '../services/auth.service';
-import { ChatService } from '../services/chat.service';
-import { MensajeChat } from '../models/chat.model';
+import { AuthService } from '../../services/auth.service';
+import { ChatService } from '../../services/chat.service';
+import { MensajeChat } from '../../models/chat.model';
 
 @Component({
   // Selector único para este componente
@@ -27,10 +27,10 @@ import { MensajeChat } from '../models/chat.model';
   imports: [CommonModule, FormsModule],
   
   // Template HTML del componente
-  templateUrl: './chat.component.html',
+  templateUrl: './chat.html',
   
   // Archivo de estilos CSS
-  styleUrl: './chat.component.css'
+  styleUrl: './chat.css'
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   

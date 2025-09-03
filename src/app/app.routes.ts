@@ -29,7 +29,7 @@ export const routes: Routes = [
   // Utiliza lazy loading: el código del componente se carga solo cuando se necesita
   {
     path: 'auth',
-    loadComponent: () => import('./components/auth.component').then(m => m.AuthComponent),
+    loadComponent: () => import('./components/auth').then(m => m.AuthComponent),
     title: 'Iniciar Sesión - Chat Asistente' // Título que aparece en la pestaña del navegador
   },
   
@@ -37,7 +37,7 @@ export const routes: Routes = [
   // También con lazy loading para optimizar la carga inicial
   {
     path: 'chat',
-    loadComponent: () => import('./components/chat.component').then(m => m.ChatComponent),
+    loadComponent: () => import('./components/chat').then(m => m.ChatComponent),
     title: 'Chat - Asistente Virtual'
     // Aquí se podría añadir un canActivate guard para verificar autenticación:
     // canActivate: [authGuard]
