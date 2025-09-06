@@ -65,11 +65,11 @@ La interfaz `Usuario` (`src/app/models/usuario.model.ts`) define la estructura d
 ```typescript
 interface Usuario {
   uid: string;           // ID único de Firebase
-  email: string;         // Correo electrónico
-  nombre?: string;       // Nombre completo (opcional)
+  email: string;         // Correo electrónico verificado
+  nombre: string;        // Nombre completo del usuario
   fotoUrl?: string;      // URL de la foto de perfil (opcional)
-  fechaCreacion: Date;   // Fecha de registro
-  ultimaConexion: Date;  // Última conexión
+  fechaCreacion: Date;   // Fecha de creación de la cuenta (requerido)
+  ultimaConexion: Date;  // Última conexión del usuario (requerido)
 }
 ```
 
@@ -158,9 +158,10 @@ async cerrarSesion() {
 
 - **`uid`**: Identificador único de Firebase (permanente)
 - **`email`**: Correo electrónico verificado de Google
-- **`displayName`**: Nombre completo del perfil de Google
-- **`photoURL`**: URL de la foto de perfil de Google
-- **`emailVerified`**: Boolean que indica si el email está verificado
+- **`nombre`**: Nombre completo del perfil de Google (antes displayName)
+- **`fotoUrl`**: URL de la foto de perfil de Google (antes photoURL)
+- **`fechaCreacion`**: Fecha de creación de la cuenta
+- **`ultimaConexion`**: Última vez que el usuario se conectó
 
 ### **Dónde se Almacena:**
 
@@ -194,23 +195,35 @@ this.authService.usuario$.subscribe(usuario => {
 3. **Estados de carga**: Previene múltiples intentos de login
 4. **Auto-logout**: Firebase maneja automáticamente tokens expirados
 
-### **Posibles Mejoras de Seguridad:**
+### **Implementación Actual de Seguridad:**
 
 ```typescript
-// Route Guards (no implementado actualmente)
-const routes: Routes = [
-  {
-    path: 'chat',
-    component: ChatComponent,
-    canActivate: [AuthGuard] // Proteger ruta automáticamente
-  }
-];
-
-// Auth Guard personalizado
-@Injectable()
+/**
+ * Auth Guard - Protección de Rutas
+ * 
+ * Este guard se ejecuta antes de navegar a una ruta protegida para verificar
+ * si el usuario está autenticado. Si no lo está, puede redirigir al login.
+ */
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthGuard implements CanActivate {
+  
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
   canActivate(): Observable<boolean> {
-    return this.authService.estaAutenticado$;
+    return this.authService.estaAutenticado$.pipe(
+      tap(estaAutenticado => {
+        if (!estaAutenticado) {
+          console.log('🚫 Acceso denegado - Usuario no autenticado');
+          this.router.navigate(['/auth']);
+        } else {
+          console.log('✅ Acceso permitido - Usuario autenticado');
+        }
+      }),
+      map(estaAutenticado => estaAutenticado)
+    );
   }
 }
 ```
@@ -223,15 +236,26 @@ La configuración de Firebase se encuentra en:
 - `src/environments/environment.ts` (desarrollo)
 - `src/environments/environment.prod.ts` (producción)
 
-### **Módulos de Angular Fire:**
+### **Configuración de Angular Fire:**
 
 ```typescript
 // En app.config.ts
-providers: [
-  provideFirebaseApp(() => initializeApp(environment.firebase)),
-  provideAuth(() => getAuth()),
-  // ... otros providers
-]
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Configuración global de errores y optimización
+    provideBrowserGlobalErrorListeners(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    
+    // Router y HTTP
+    provideRouter(routes),
+    provideHttpClient(),
+    
+    // Firebase
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideAuth(() => getAuth()),
+    provideFirestore(() => getFirestore())
+  ]
+}
 ```
 
 ### **Dependencias Principales:**
@@ -243,43 +267,57 @@ providers: [
 ## 📝 Ejemplo de Uso Completo
 
 ```typescript
-// En cualquier componente
-export class MiComponente implements OnInit {
-  usuario: User | null = null;
-  estaAutenticado = false;
+@Component({
+  selector: 'app-auth',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './auth.html',
+  styleUrl: './auth.css'
+})
+export class AuthComponent implements OnInit {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  
+  // Variables de estado
+  autenticando = false;
+  mensajeError = '';
 
-  constructor(private authService: AuthService) {}
-
-  ngOnInit() {
-    // Escuchar cambios de autenticación
+  ngOnInit(): void {
+    // Verificar si ya está autenticado
     this.authService.estaAutenticado$.subscribe(autenticado => {
-      this.estaAutenticado = autenticado;
-    });
-
-    // Obtener datos del usuario
-    this.authService.usuario$.subscribe(usuario => {
-      this.usuario = usuario;
-      if (usuario) {
-        console.log(`Bienvenido ${usuario.displayName}!`);
+      if (autenticado) {
+        this.router.navigate(['/chat']);
       }
     });
   }
 
-  async login() {
+  async iniciarSesionConGoogle(): Promise<void> {
+    this.mensajeError = '';
+    this.autenticando = true;
+    
     try {
-      await this.authService.iniciarSesionConGoogle();
-      // Usuario automáticamente redirigido
-    } catch (error) {
-      console.error('Error en login:', error);
-    }
-  }
-
-  async logout() {
-    try {
-      await this.authService.cerrarSesion();
-      // Estado automáticamente actualizado
-    } catch (error) {
-      console.error('Error en logout:', error);
+      const usuario = await this.authService.iniciarSesionConGoogle();
+      
+      if (usuario) {
+        await this.router.navigate(['/chat']);
+      } else {
+        this.mensajeError = 'No se pudo obtener la información del usuario';
+      }
+      
+    } catch (error: any) {
+      // Manejo específico de errores de Firebase
+      if (error.code === 'auth/popup-closed-by-user') {
+        this.mensajeError = 'Has cerrado la ventana de autenticación.';
+      } else if (error.code === 'auth/popup-blocked') {
+        this.mensajeError = 'Tu navegador bloqueó la ventana de autenticación.';
+      } else if (error.code === 'auth/network-request-failed') {
+        this.mensajeError = 'Error de conexión. Verifica tu internet.';
+      } else {
+        this.mensajeError = 'Error al iniciar sesión. Por favor intenta de nuevo.';
+      }
+      
+    } finally {
+      this.autenticando = false;
     }
   }
 }

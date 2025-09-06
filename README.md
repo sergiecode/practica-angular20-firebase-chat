@@ -26,7 +26,7 @@ Esta aplicación incluye:
 - ✅ **Chat en tiempo real** con persistencia en Firestore
 - ✅ **Integración con ChatGPT** para respuestas de IA inteligentes
 - ✅ **Manejo de errores** robusto en toda la aplicación
-- ✅ **Interfaz en español** con comentarios educativos completos
+- - **Interfaz en español** con comentarios educativos detallados
 - ✅ **Diseño responsivo** que funciona en móviles y escritorio
 - ✅ **TypeScript completo** con interfaces tipadas
 - ✅ **Despliegue listo** para Firebase Hosting
@@ -41,11 +41,13 @@ Antes de comenzar, asegúrate de tener instalado:
 
 ```bash
 # Node.js 18 o superior (recomendado LTS)
-node --version
+node --version # v18.x.x o superior
 
-# npm (viene con Node.js)
-npm --version
-```
+# npm 9 o superior (viene con Node.js)
+npm --version # v9.x.x o superior
+
+# Git para control de versiones
+git --version
 
 Si no tienes Node.js: [Descargar Node.js](https://nodejs.org/)
 
@@ -58,14 +60,14 @@ Si no tienes Node.js: [Descargar Node.js](https://nodejs.org/)
 npm install -g @angular/cli@latest
 
 # 2. Crear nuevo proyecto Angular
-ng new angular20-firebase-chat
+ng new practica-angular20-firebase-chat
 
 # Durante la creación, elegir:
 # ❓ Which stylesheet format would you like to use? → CSS
 # ❓ Do you want to enable Server-Side Rendering (SSR) and Static Site Generation (SSG/Prerendering)? → No
 
 # 3. Navegar al directorio del proyecto
-cd angular20-firebase-chat
+cd practica-angular20-firebase-chat
 ```
 
 ---
@@ -97,6 +99,9 @@ ng generate service services/firestore --skip-tests
 ng generate service services/chat --skip-tests
 ng generate service services/openai --skip-tests
 
+# Generar guard de autenticación
+ng generate guard guards/auth --skip-tests
+
 # Crear directorio para modelos
 mkdir src/app/models
 ```
@@ -109,14 +114,28 @@ mkdir src/app/models
 ```typescript
 /**
  * Modelo de datos para representar un usuario en nuestra aplicación
+ * Este interfaz define la estructura de un usuario autenticado con Firebase
+ * 
  * @autor Sergie Code - Tutorial Angular 20 + Firebase
  */
 export interface Usuario {
+  // Identificador único del usuario (viene de Firebase Auth)
   uid: string;
+  
+  // Correo electrónico del usuario
   email: string;
+  
+  // Nombre completo del usuario (puede venir de Google Auth)
   nombre?: string;
+  
+  // URL de la foto de perfil (generalmente de Google)
   fotoUrl?: string;
-  fechaRegistro?: Date;
+  
+  // Fecha de creación de la cuenta
+  fechaCreacion: Date;
+  
+  // Última vez que el usuario se conectó
+  ultimaConexion: Date;
 }
 ```
 
@@ -124,22 +143,59 @@ export interface Usuario {
 ```typescript
 /**
  * Modelo de datos para representar un mensaje del chat
+ * Define la estructura de cada mensaje en la conversación
+ * 
  * @autor Sergie Code - Tutorial Angular 20 + Firebase
  */
 export interface MensajeChat {
+  // Identificador único del mensaje
   id?: string;
+  
+  // ID del usuario que envió el mensaje
   usuarioId: string;
+  
+  // Contenido del mensaje
   contenido: string;
+  
+  // Fecha y hora cuando se envió el mensaje
   fechaEnvio: Date;
+  
+  // Tipo de mensaje: 'usuario' para mensajes del usuario, 'asistente' para respuestas de ChatGPT
   tipo: 'usuario' | 'asistente';
-  estado?: 'enviando' | 'enviado' | 'error';
+  
+  // Estado del mensaje (para mostrar indicadores de carga, etc.)
+  estado?: 'enviando' | 'enviado' | 'error' | 'temporal';
+}
+
+/**
+ * Modelo para la conversación completa del usuario
+ * Agrupa todos los mensajes de un usuario en una conversación
+ */
+export interface ConversacionChat {
+  // ID único de la conversación
+  id?: string;
+  
+  // ID del usuario propietario de la conversación
+  usuarioId: string;
+  
+  // Lista de todos los mensajes en la conversación
+  mensajes: MensajeChat[];
+  
+  // Fecha de creación de la conversación
+  fechaCreacion: Date;
+  
+  // Última actividad en la conversación
+  ultimaActividad: Date;
+  
+  // Título o resumen de la conversación (opcional)
+  titulo?: string;
 }
 ```
 
 **Crear `src/app/components/index.ts`:**
 ```typescript
-export { AuthComponent } from './auth/auth.component';
-export { ChatComponent } from './chat/chat.component';
+export { AuthComponent } from './auth/auth';
+export { ChatComponent } from './chat/chat';
 ```
 
 ---
@@ -183,7 +239,7 @@ export { ChatComponent } from './chat/chat.component';
 
 #### 6.1. Crear Template de Environment
 
-**Crear `src/environments/environment.template.ts`:**
+El archivo `src/environments/environment.template.ts` sirve como plantilla segura para compartir la estructura de configuración sin exponer claves reales:
 ```typescript
 /**
  * TEMPLATE - Configuración del entorno para desarrollo
@@ -199,7 +255,8 @@ export const environment = {
     projectId: "your-project-id", 
     storageBucket: "your-project.appspot.com",
     messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdefghijklmnop"
+    appId: "1:123456789:web:abcdefghijklmnop",
+    measurementId: "G-XXXXXXXXXX"
   },
   
   // OpenAI Configuration - Get from https://platform.openai.com/api-keys
@@ -246,11 +303,28 @@ Copy-Item "src/environments/environment.ts" "src/environments/environment.prod.t
 
 ---
 
-### ⚙️ Paso 8: Configurar App Config (Standalone)
+### 🛣️ Paso 8: Configurar Rutas y App Config
+
+#### 8.1 Configurar Rutas con Lazy Loading
+
+Las rutas están configuradas en `src/app/app.routes.ts` con las siguientes características:
+- Lazy loading para optimizar la carga inicial
+- Títulos de página para mejor SEO
+- Protección de rutas con Auth Guard
+- Redirección automática para rutas no encontradas
+
+#### 8.2 Configurar App Config (Standalone)
+
+La aplicación utiliza la configuración moderna de Angular con providers standalone. El archivo `src/app/app.config.ts` configura:
+- 🛡️ Manejo global de errores del navegador
+- ⚡ Optimización de detección de cambios con event coalescing
+- 🔄 Router para navegación entre páginas
+- 🌐 HttpClient para peticiones a OpenAI
+- 🔥 Servicios de Firebase (Auth y Firestore)
 
 **Editar `src/app/app.config.ts`:**
 ```typescript
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -261,8 +335,15 @@ import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // Manejo global de errores y optimización
+    provideBrowserGlobalErrorListeners(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    
+    // Router y HTTP
     provideRouter(routes),
     provideHttpClient(),
+    
+    // Firebase
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore())
@@ -287,12 +368,14 @@ export const routes: Routes = [
   },
   { 
     path: 'auth', 
-    loadComponent: () => import('./components/auth/auth.component').then(m => m.AuthComponent)
+    loadComponent: () => import('./components/auth').then(m => m.AuthComponent),
+    title: 'Iniciar Sesión - Chat Asistente'
   },
   { 
     path: 'chat', 
-    loadComponent: () => import('./components/chat/chat.component').then(m => m.ChatComponent),
-    canActivate: [AuthGuard] // 🛡️ Ruta protegida con Auth Guard
+    loadComponent: () => import('./components/chat').then(m => m.ChatComponent),
+    title: 'Chat - Asistente Virtual',
+    canActivate: [authGuard] // 🛡️ Ruta protegida con Auth Guard
   },
   { 
     path: '**', 
@@ -318,6 +401,18 @@ Los Route Guards añaden una capa crucial de seguridad que protege rutas antes d
 
 **Crear `src/app/guards/auth.guard.ts`:**
 ```typescript
+/**
+ * Auth Guard - Protección de Rutas
+ * 
+ * Este guard se ejecuta antes de navegar a una ruta protegida para verificar
+ * si el usuario está autenticado. Si no lo está, puede redirigir al login.
+ * 
+ * Beneficios de seguridad:
+ * - Previene acceso directo a URLs protegidas
+ * - Se ejecuta antes de cargar el componente (más eficiente)
+ * - Puede redirigir automáticamente a login si no está autenticado
+ * - Funciona con navegación programática y directa en URL
+ */
 import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -332,8 +427,14 @@ export class AuthGuard implements CanActivate {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  /**
+   * Método que determina si se puede activar la ruta
+   * 
+   * @returns Observable<boolean> - true si puede acceder, false si no
+   */
   canActivate(): Observable<boolean> {
     return this.authService.estaAutenticado$.pipe(
+      // Si no está autenticado, redirigir al login
       tap(estaAutenticado => {
         if (!estaAutenticado) {
           console.log('🚫 Acceso denegado - Usuario no autenticado');
@@ -342,11 +443,11 @@ export class AuthGuard implements CanActivate {
           console.log('✅ Acceso permitido - Usuario autenticado');
         }
       }),
+      // Retornar el estado de autenticación
       map(estaAutenticado => estaAutenticado)
     );
   }
 }
-```
 
 **Crear `src/app/guards/index.ts`:**
 ```typescript
@@ -368,31 +469,36 @@ export { AuthGuard } from './auth.guard';
 #### 10.1. Auth Service (`src/app/services/auth.service.ts`)
 
 Implementa:
-- Login con Google OAuth
-- Logout
-- Gestión del estado del usuario
-- Observable del usuario actual
+- Login/Logout con Google OAuth usando Firebase Auth
+- Estado reactivo con `usuario$` y `estaAutenticado$`
+- Gestión de datos del usuario (UID, email, foto)
+- Manejo de errores de autenticación
 
 #### 10.2. Firestore Service (`src/app/services/firestore.service.ts`)
 
 Implementa:
 - Operaciones CRUD con Firestore
-- Escucha en tiempo real de mensajes
-- Manejo de errores
+- Escucha en tiempo real con `onSnapshot`
+- Conversión de tipos Date ↔ Timestamp
+- Manejo de errores con logs detallados
 
 #### 10.3. OpenAI Service (`src/app/services/openai.service.ts`)
 
 Implementa:
-- Comunicación con ChatGPT API
-- Manejo de prompts del sistema
-- Control de errores de API
+- Comunicación HTTP con ChatGPT API
+- Sistema de prompts personalizado
+- Gestión de tokens y contexto
+- Manejo de errores específicos de API
+- Optimización de historial de mensajes
 
 #### 10.4. Chat Service (`src/app/services/chat.service.ts`)
 
 Implementa:
-- Lógica del chat combinando Firestore y OpenAI
-- Gestión del flujo de mensajes
-- Coordinación entre servicios
+- BehaviorSubject para estado de mensajes
+- Coordinación entre servicios (Auth, Firestore, OpenAI)
+- Estado de carga con `asistenteRespondiendo$`
+- Gestión optimizada del historial
+- Manejo robusto de errores
 
 ---
 
@@ -401,43 +507,112 @@ Implementa:
 #### 11.1. Auth Component (`src/app/components/auth/`)
 
 **auth.component.ts:**
-- Login/Logout con Google
-- Gestión del estado del usuario
-- Redirección automática al chat
+- **Autenticación Firebase**
+  - Integración con Google OAuth
+  - Manejo de estado con observables
+  - Redirección automática según estado
+  - Manejo detallado de errores de Firebase
+
+- **Gestión de Estado**
+  - Control de estados de carga
+  - Mensajes de error personalizados
+  - Verificación de autenticación previa
+  - Limpieza automática de errores
+
+- **Seguridad**
+  - Manejo de popups bloqueados
+  - Verificación de conexión de red
+  - Validación de información de usuario
+  - Protección contra múltiples intentos
 
 **auth.component.html:**
-- Interfaz de autenticación
-- Botón de Google Sign-in
-- Manejo de estados de carga
+- **Interfaz Principal**
+  - Logo animado con emoji
+  - Título y subtítulo descriptivos
+  - Lista de características clave
+  - Información de privacidad
+
+- **Botón de Google**
+  - Diseño oficial de Google
+  - Estados de carga visual
+  - Feedback de errores contextual
+  - Icono SVG optimizado
+
+- **Elementos UI**
+  - Mensajes de error formatados
+  - Indicador de carga (spinner)
+  - Textos informativos de privacidad
+  - Créditos y atribución
 
 **auth.component.css:**
-- Estilos responsive
+En este paso agregaremos los estilos del componente de autenticación. Para ello utilizaremos el archivo `src/app/components/auth/auth.css` que será provisto en el repositorio de la clase. Este archivo implementa:
+- Diseño moderno con efectos de cristal y animaciones
+- Sistema completo de responsive design
+- Soporte para tema oscuro automático
+- Optimizaciones de rendimiento y accesibilidad
 - Diseño centrado
 - Animaciones suaves
 
 #### 11.2. Chat Component (`src/app/components/chat/`)
 
 **chat.component.ts:**
-- Interfaz del chat
-- Envío de mensajes
-- Recepción en tiempo real
-- Integración con ChatGPT
+- **Gestión de Estado**
+  - Manejo de estado con Observables y Signals
+  - Sistema de suscripciones con limpieza automática
+  - Control de estados de carga y errores
+  - Tracking optimizado para NgFor
+
+- **Interacción Usuario**
+  - Envío de mensajes en tiempo real
+  - Atajos de teclado (Enter para enviar, Shift+Enter nueva línea)
+  - Auto-scroll inteligente a nuevos mensajes
+  - Manejo de errores con feedback visual
+
+- **Integración Servicios**
+  - Autenticación con AuthService
+  - Chat en tiempo real con ChatService
+  - Respuestas de IA con OpenAI
+  - Persistencia en Firestore
+
+- **Optimización**
+  - Lazy loading de componentes
+  - Manejo eficiente de memoria
+  - Desuscripción automática de observables
+  - Validación de estados y errores
 
 **chat.component.html:**
-- Lista de mensajes
-- Input para nuevos mensajes
-- Burbujas diferenciadas por usuario
+- **Interfaz Principal**
+  - Header con información del usuario
+  - Avatar con fallback automático
+  - Botón de cierre de sesión
+  - Indicadores de estado
+
+- **Área de Mensajes**
+  - Mensaje de bienvenida personalizado
+  - Burbujas diferenciadas (usuario/asistente)
+  - Indicador de escritura del asistente
+  - Formateo Markdown de mensajes
+  - Timestamps con formato local
+
+- **Panel de Input**
+  - Textarea auto-expandible
+  - Validación en tiempo real
+  - Estado de envío visual
+  - Mensajes de error contextuales
 
 **chat.component.css:**
-- Diseño de chat moderno
-- Scroll automático
-- Responsive design
+En este paso agregaremos los estilos del componente de chat. Para ello utilizaremos el archivo `src/app/components/chat/chat.css` que será provisto en el repositorio de la clase. Este archivo implementa:
+- Sistema completo de diseño para la interfaz de chat
+- Diseño responsivo para todas las pantallas
+- Tema oscuro automático
+- Animaciones y transiciones optimizadas
+- Sistema de feedback visual para todas las acciones
 
 ---
 
 ### 🎨 Paso 12: Configurar App Principal
 
-**Editar `src/app/app.component.ts`:**
+**Editar `src/app/app.ts`:**
 ```typescript
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
@@ -446,40 +621,22 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet],
-  template: '<router-outlet></router-outlet>',
-  styleUrls: ['./app.component.css']
+  templateUrl: './app.html',
+  styleUrl: './app.css'
 })
 export class AppComponent {
-  title = 'angular20-firebase-chat';
+  title = 'practica-angular20-firebase-chat';
 }
 ```
 
-**Actualizar `src/styles.css`** con estilos globales:
-```css
-/* Reset básico y estilos globales */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+**Actualizar estilos globales:**
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-}
-
-/* Variables CSS para consistencia */
-:root {
-  --primary-color: #4285f4;
-  --secondary-color: #34a853;
-  --danger-color: #ea4335;
-  --warning-color: #fbbc05;
-  --dark-color: #202124;
-  --light-color: #f8f9fa;
-  --border-radius: 8px;
-  --shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
+En este paso agregaremos los estilos globales de la aplicación. Para ello utilizaremos el archivo `src/styles.css` que será provisto en el repositorio de la clase. Este archivo contiene:
+- Reset básico de estilos
+- Variables CSS globales para consistencia
+- Estilos base del body
+- Gradientes y colores principales
+- Sistema de sombras y bordes
 ```
 
 ---
@@ -528,6 +685,61 @@ service cloud.firestore {
 
 ---
 
+### 🏗️ Paso 14.5: Configuración de Build
+
+La configuración de build está definida en `angular.json` con las siguientes características:
+
+```json
+{
+  "build": {
+    "builder": "@angular/build:application",
+    "options": {
+      "browser": "src/main.ts",
+      "polyfills": ["zone.js"],
+      "tsConfig": "tsconfig.app.json",
+      "assets": [
+        {
+          "glob": "**/*",
+          "input": "public"
+        }
+      ],
+      "styles": ["src/styles.css"]
+    },
+    "configurations": {
+      "production": {
+        "budgets": [
+          {
+            "type": "initial",
+            "maximumWarning": "5000kB",
+            "maximumError": "5MB"
+          },
+          {
+            "type": "anyComponentStyle",
+            "maximumWarning": "40kB",
+            "maximumError": "80kB"
+          }
+        ],
+        "outputHashing": "all"
+      },
+      "development": {
+        "optimization": false,
+        "extractLicenses": false,
+        "sourceMap": true
+      }
+    }
+  }
+}
+```
+
+#### Detalles importantes:
+- ✅ Los assets se copian automáticamente desde la carpeta `public/`
+- ✅ Soporte para polyfills con zone.js
+- ✅ Configuración de desarrollo con source maps
+- ✅ Configuración de producción con:
+  - Límite inicial de bundle: 5MB (warning a 5000kB)
+  - Límite de estilos por componente: 80kB (warning a 40kB)
+  - Output hashing para cache busting
+
 ### 🚀 Paso 15: Desplegar en Firebase Hosting
 
 #### 15.1. Instalar Firebase CLI
@@ -549,9 +761,16 @@ firebase login
 firebase init hosting
 
 # Configuración recomendada:
-# ❓ What do you want to use as your public directory? → dist/angular20-firebase-chat
+# ❓ What do you want to use as your public directory? → dist/angular20-firebase-chat/browser
 # ❓ Configure as a single-page app (rewrite all urls to /index.html)? → Yes
 # ❓ Set up automatic builds and deploys with GitHub? → No (por ahora)
+```
+
+La configuración generará un archivo `firebase.json` que incluye:
+- Directorio de salida para el build
+- Reglas para ignorar archivos innecesarios
+- Rewrites para el manejo de rutas en SPA
+- Headers optimizados para CORS y cache
 ```
 
 #### 15.4. Construir para Producción
@@ -578,10 +797,15 @@ firebase deploy
 
 #### 15.6. Script de Deploy Automatizado
 
-**Scripts agregados a `package.json`:**
+**Scripts disponibles en `package.json`:**
 ```json
 {
   "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
     "deploy": "ng build && firebase deploy",
     "deploy:quick": "firebase deploy --only hosting"
   }
@@ -597,12 +821,52 @@ npm run deploy
 npm run deploy:quick
 ```
 
-**Nota importante**: En Angular 20, los archivos se generan en `dist/angular20-firebase-chat/browser`, por lo que el `firebase.json` debe estar configurado correctamente:
+**Nota importante**: En Angular 20, los archivos se generan en `dist/angular20-firebase-chat/browser`. El archivo `firebase.json` debe estar configurado así:
 
 ```json
 {
   "hosting": {
-    "public": "dist/angular20-firebase-chat/browser"
+    "public": "dist/angular20-firebase-chat/browser",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(eot|otf|ttf|ttc|woff|woff2|font.css)",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=31536000"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=31536000"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -621,30 +885,96 @@ npm run deploy:quick
 
 ### 🎯 Paso 17: Optimizaciones Finales
 
-#### 17.1. Configurar .gitignore
+#### 17.1. Configurar Prettier
+El proyecto usa Prettier para mantener un estilo de código consistente. La configuración ya está incluida en `package.json`:
 
-**Asegúrate de que incluya:**
+```json
+"prettier": {
+  "printWidth": 100,
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": {
+        "parser": "angular"
+      }
+    }
+  ]
+}
+```
+
+#### 17.2. Configurar TypeScript
+El proyecto usa una configuración estricta de TypeScript. Asegúrate de que tu `tsconfig.json` tenga estas opciones:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  }
+}
+```
+
+#### 17.3. Configurar .gitignore
+
+**El archivo .gitignore debe incluir:**
 ```gitignore
-# Environment files con claves sensibles
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Dependencies
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Build and cache
+/.angular/cache
+.sass-cache/
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# Environment files (SECURITY)
+.env*
+environment.ts
+environment.prod.ts
 src/environments/environment.ts
 src/environments/environment.prod.ts
 
-# Firebase
-.firebase/
-firebase-debug.log
-firestore-debug.log
+# Test files with API keys
+firebase-test.html
+*-test.html
 
-# Dependencies
-node_modules/
-
-# Build outputs
-dist/
-.angular/
-
-# IDEs
-.vscode/
-.idea/
+# System files
+.DS_Store
+Thumbs.db
 ```
+
+**⚠️ Importante:** Nunca subas archivos con claves API o credenciales al repositorio.
 
 #### 17.2. Crear Environment de Ejemplo
 
@@ -677,43 +1007,68 @@ export const environment = {
 2. **Configura** tus claves de Firebase (del paso 5.4)
 3. **Configura** tu clave de OpenAI (del paso 7)
 4. **NUNCA** subas archivos con claves reales a repositorios públicos
+5. **Verifica** que los archivos de environment estén en .gitignore
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## 🛠️ Tecnologías y Dependencias
 
-- **Frontend**: Angular 20, TypeScript 5.9, CSS3
-- **Backend**: Firebase (Firestore, Authentication)  
-- **IA**: OpenAI ChatGPT API
-- **Despliegue**: Firebase Hosting
-- **Herramientas**: Angular CLI 20, npm, Firebase CLI
+### Core
+- **Frontend**: Angular ^20.2.0
+- **Backend**: Firebase ^11.10.0
+- **Database**: @angular/fire ^20.0.1
+- **TypeScript**: ~5.9.2
+- **RxJS**: ~7.8.0
+
+### Herramientas de Desarrollo
+- **Angular CLI**: ^20.2.0
+- **Jasmine/Karma**: Testing framework
+- **Prettier**: Formateador de código
+- **Node.js**: v18+ requerido
+- **Git**: Control de versiones
 
 ---
 
-## 📁 Estructura Final del Proyecto
+## 📁 Estructura Completa del Proyecto
 
 ```
-src/
-├── app/
-│   ├── components/           # Componentes standalone
-│   │   ├── auth/            # Autenticación con Google
-│   │   ├── chat/            # Interfaz del chat
-│   │   └── index.ts         # Barrel exports
-│   ├── guards/              # Route Guards para seguridad
-│   │   ├── auth.guard.ts    # Guard de autenticación
-│   │   └── index.ts         # Exports de guards
-│   ├── models/              # Interfaces TypeScript
-│   │   ├── usuario.model.ts # Modelo de usuario
-│   │   └── chat.model.ts    # Modelo de mensajes
-│   ├── services/            # Servicios de Angular
-│   │   ├── auth.service.ts  # Autenticación
-│   │   ├── firestore.service.ts # Base de datos
-│   │   ├── openai.service.ts    # ChatGPT API
-│   │   └── chat.service.ts      # Lógica del chat
-│   ├── app.config.ts        # Configuración de la app
-│   ├── app.routes.ts        # Rutas de la aplicación
-│   ├── app.component.ts     # Componente principal
-│   └── app.component.css    # Estilos principales
+├── public/                 # Assets públicos (configurado en angular.json)
+│   ├── default-avatar.png  # Avatar por defecto
+│   └── favicon.ico        # Ícono de la aplicación
+├── src/
+│   ├── index.html          # Página principal
+│   ├── main.ts             # Punto de entrada
+│   ├── styles.css          # Estilos globales
+│   ├── app/
+│   │   ├── components/     # Componentes standalone
+│   │   │   ├── auth/      # Autenticación con Google
+│   │   │   │   ├── auth.css
+│   │   │   │   ├── auth.html
+│   │   │   │   ├── auth.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── chat/      # Interfaz del chat
+│   │   │   │   ├── chat.css
+│   │   │   │   ├── chat.html
+│   │   │   │   ├── chat.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts   # Barrel exports
+│   │   ├── guards/        # Route Guards para seguridad
+│   │   │   ├── auth.guard.ts # Guard de autenticación
+│   │   │   └── index.ts   # Exports de guards
+│   │   ├── models/        # Interfaces TypeScript
+│   │   │   ├── usuario.model.ts # Modelo de usuario
+│   │   │   └── chat.model.ts    # Modelo de mensajes
+│   │   ├── services/      # Servicios de Angular
+│   │   │   ├── auth.service.ts     # Autenticación
+│   │   │   ├── firestore.service.ts # Base de datos
+│   │   │   ├── openai.service.ts    # ChatGPT API
+│   │   │   └── chat.service.ts      # Lógica del chat
+│   │   ├── app.config.ts  # Configuración de la app
+│   │   ├── app.routes.ts  # Rutas de la aplicación
+│   │   ├── app.css       # Estilos principales
+│   │   ├── app.html      # Template principal
+│   │   ├── app.ts        # Componente principal
+│   │   └── app.spec.ts   # Tests principales
 ├── environments/            # Variables de entorno
 │   ├── environment.template.ts  # Template (sube a Git)
 │   ├── environment.ts           # Desarrollo (NO subir)
@@ -731,8 +1086,9 @@ npm start                    # Servidor de desarrollo
 ng serve --open             # Abrir en navegador automáticamente
 
 # Construcción
-npm run build               # Build de desarrollo
-ng build --configuration=production  # Build de producción
+ng build                    # Build de producción (configuración por defecto)
+ng build --configuration=development  # Build de desarrollo con source maps
+ng build --watch           # Build en modo watch para desarrollo
 
 # Testing
 npm test                    # Ejecutar tests
@@ -943,21 +1299,26 @@ Este proyecto se proporciona como material educativo. Siéntete libre de usarlo,
 
 ### 🎉 **¡Aplicación Desplegada Exitosamente!**
 
-**Tu aplicación ya está en línea en**: https://practica-angular20-chat-llm.web.app
+**Tu aplicación estará en línea en**: https://TU-PROYECTO.web.app (reemplaza TU-PROYECTO con el ID de tu proyecto Firebase)
 
 #### ✅ **Scripts de despliegue disponibles:**
 ```bash
-# Deploy completo (recomendado)
-npm run deploy              # Hace build y deploy automáticamente
+# Build de producción
+ng build --configuration=production
 
-# Deploy rápido (si ya hiciste build)
-npm run deploy:quick        # Solo sube archivos al hosting
+# Deploy a Firebase Hosting
+firebase deploy              # Deploy completo
+firebase deploy --only hosting  # Solo hosting
+
+# Probar build localmente
+firebase serve --only hosting
 ```
 
 #### 📋 **Configuración importante post-despliegue:**
-1. **Dominios autorizados**: Agrega `practica-angular20-chat-llm.web.app` en Firebase Console → Authentication → Settings → Authorized domains
-2. **Reglas de Firestore**: Verifica que solo usuarios autenticados puedan acceder a los datos
-3. **Variables de entorno**: Asegúrate de que todas las API keys estén configuradas correctamente
+1. **Dominios autorizados**: Agrega tu dominio de Firebase (ejemplo: `tu-proyecto.web.app`) en Firebase Console → Authentication → Settings → Authorized Domains
+2. **Reglas de Firestore**: Verifica que las reglas de seguridad estén configuradas según el paso 14
+3. **Variables de entorno**: Confirma que las API keys en `environment.prod.ts` sean correctas
+4. **Cache y CORS**: Verifica que los headers de Firebase Hosting estén configurados según `firebase.json`
 
 ---
 
