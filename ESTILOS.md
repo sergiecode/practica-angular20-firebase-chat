@@ -1,4 +1,68 @@
-styles.css
+# Guía de Estilos CSS - Chat Angular Firebase
+
+## Introducción
+
+Este documento contiene todos los archivos CSS del proyecto de chat con Angular y Firebase. Está diseñado para ser usado como referencia durante el curso de Angular, permitiendo copiar y pegar los estilos en los momentos correspondientes del desarrollo.
+
+## Descripción de Archivos CSS
+
+### 📋 Archivos incluidos:
+
+1. **`styles.css`** - Estilos globales del proyecto
+   - Variables CSS customizadas (colores, espaciado, sombras)
+   - Clases utilitarias para layout y tipografía
+   - Estilos base para botones, inputs y cards
+   - Animaciones y efectos visuales
+   - Media queries para responsive design
+
+2. **`app.css`** - Estilos del componente principal (AppComponent)
+   - Variables de tema del componente raíz
+   - Layout general de la aplicación
+   - Estilos para el router-outlet
+   - Clases de contenedor y utilidades básicas
+
+### ❓ ¿Por qué separar estilos globales entre `styles.css` y `app.css`?
+
+**`styles.css` (Estilos verdaderamente globales):**
+- Se aplican a **toda la aplicación** desde el primer momento
+- Incluye reset CSS, variables CSS, y utilidades que necesitan todos los componentes
+- Estilos que deben estar disponibles **antes** de que Angular inicie
+- Sistema de diseño base (colores, tipografía, espaciado)
+
+**`app.css` (Estilos del componente raíz):**
+- Se aplican específicamente al **AppComponent** y su contexto
+- Variables CSS que pueden ser **heredadas** por componentes hijos
+- Layout específico del contenedor principal de la aplicación
+- Estilos que controlan la estructura general pero no los elementos básicos
+
+**En resumen:** `styles.css` = fundamentos universales | `app.css` = estructura de la aplicación
+
+3. **`chat.css`** - Estilos del componente de chat
+   - Layout completo de la interfaz de chat
+   - Estilos para header, mensajes y área de entrada
+   - Animaciones de mensajes y indicadores de escritura
+   - Panel de estadísticas expandible
+   - Responsive design específico para el chat
+
+4. **`auth.css`** - Estilos del componente de autenticación
+   - Pantalla de login con gradientes y efectos
+   - Card de autenticación con backdrop-filter
+   - Botón de Google con estados interactivos
+   - Animaciones de entrada y loading
+   - Mensajes de error estilizados
+
+## 💡 Cómo usar durante el curso:
+
+- Copia y pega cada sección según avances en el desarrollo
+- Los estilos están organizados por componente para facilitar la implementación
+- Cada archivo tiene comentarios que indican las secciones principales
+- Las variables CSS permiten personalización fácil del tema
+
+---
+---
+---
+
+# styles.css
 ```css
 * {
   margin: 0;
@@ -188,7 +252,7 @@ html, body {
 }
 ```
 
-app.css
+# app.css
 ```css
 
 :host {
@@ -261,7 +325,7 @@ body {
 }
 ```
 
-chat.css
+# chat.css
 ```css
 
 .chat-container {
@@ -924,7 +988,7 @@ chat.css
 }
 ```
 
-auth.css
+# auth.css
 ```css
 
 .auth-container {
